@@ -51,6 +51,8 @@ impl MidiPlayer {
 
         events.iter().for_each(|event| {
             use lib_midi::midly::MidiMessage;
+            let channel = event.channel;
+
             match event.message {
                 MidiMessage::NoteOn { key, vel } => {
                     let event = midi::Message::NoteOn(
@@ -59,8 +61,10 @@ impl MidiPlayer {
                         vel.as_int(),
                     );
                     self.output_manager.borrow_mut().midi_event(event);
-                    self.play_along
-                        .press_key(KeyPressSource::File, key.as_int(), true);
+                    if channel == 9 {
+                        self.play_along
+                            .press_key(KeyPressSource::File, key.as_int(), true);
+                    }
                 }
                 MidiMessage::NoteOff { key, .. } => {
                     let event = midi::Message::NoteOff(
@@ -69,8 +73,10 @@ impl MidiPlayer {
                         0,
                     );
                     self.output_manager.borrow_mut().midi_event(event);
-                    self.play_along
-                        .press_key(KeyPressSource::File, key.as_int(), false);
+                    if channel == 9 {
+                        self.play_along
+                            .press_key(KeyPressSource::File, key.as_int(), false);
+                    }
                 }
                 _ => {}
             }

@@ -23,8 +23,6 @@ pub struct KeyboardRange {
     range: Range<u8>,
 
     keys: Vec<KeyId>,
-    white_keys: Vec<KeyId>,
-    black_keys: Vec<KeyId>,
 }
 
 impl KeyboardRange {
@@ -33,8 +31,6 @@ impl KeyboardRange {
         R: RangeBounds<usize>,
     {
         let mut keys = Vec::new();
-        let mut white_keys = Vec::new();
-        let mut black_keys = Vec::new();
 
         let start = range.start_bound();
         let end = range.end_bound();
@@ -55,25 +51,17 @@ impl KeyboardRange {
 
         for id in range.clone().map(KeyId) {
             keys.push(id);
-
-            if id.is_black() {
-                black_keys.push(id);
-            } else {
-                white_keys.push(id);
-            }
         }
 
         Self {
             range,
 
             keys,
-            white_keys,
-            black_keys,
         }
     }
 
     pub fn standard_88_keys() -> Self {
-        Self::new(21..=108)
+        Self::new(27..53)
     }
 }
 
@@ -86,24 +74,8 @@ impl KeyboardRange {
         self.keys.len()
     }
 
-    pub fn white_count(&self) -> usize {
-        self.white_keys.len()
-    }
-
-    pub fn black_count(&self) -> usize {
-        self.black_keys.len()
-    }
-
     pub fn iter(&self) -> std::slice::Iter<KeyId> {
         self.keys.iter()
-    }
-
-    pub fn white_iter(&self) -> std::slice::Iter<KeyId> {
-        self.white_keys.iter()
-    }
-
-    pub fn black_iter(&self) -> std::slice::Iter<KeyId> {
-        self.black_keys.iter()
     }
 }
 

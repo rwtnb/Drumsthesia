@@ -204,7 +204,7 @@ pub fn init(builder: winit::window::WindowBuilder) -> (EventLoop<NeothesiaEvent>
     let event_loop = EventLoopBuilder::with_user_event().build();
     let proxy = event_loop.create_proxy();
 
-    let builder = builder.with_title("Neothesia");
+    let builder = builder.with_title("Drumsthesia");
 
     #[cfg(target_os = "windows")]
     let builder = {

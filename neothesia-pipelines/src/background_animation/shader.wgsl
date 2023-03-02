@@ -35,10 +35,10 @@ fn rot_z(angle: f32) -> mat2x2<f32> {
 fn note_render(uv: vec2<f32>, pos: f32, color: vec3<f32>) -> vec3<f32> {
     let mod_x: f32 = uv.x % (0.1 * 2.5 * 2.0);
 
-    var col: vec3<f32> = vec3<f32>(0.35, 0.08, 0.85);
+    var col: vec3<f32> = vec3<f32>(0.35, 0.35, 0.35);
 
     if pos == 0.5 {
-        col = vec3<f32>(0.16, 0.02, 0.44);
+        col = vec3<f32>(0.1, 0.1, 0.1);
     }
 
     if uv.y > 0.0 && uv.y < 0.5 {

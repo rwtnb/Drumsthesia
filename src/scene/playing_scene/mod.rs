@@ -1,13 +1,16 @@
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
 use std::time::Duration;
 use wgpu_jumpstart::Color;
-use winit::event::{KeyboardInput, WindowEvent};
+use winit::{
+    dpi::LogicalSize,
+    event::{KeyboardInput, WindowEvent},
+};
 
 use super::{Scene, SceneType};
 use crate::{midi_event::MidiEvent, target::Target, NeothesiaEvent};
 
-mod keyboard;
-use keyboard::PianoKeyboard;
+mod drum_roll;
+use drum_roll::DrumRoll;
 
 mod notes;
 use notes::Notes;
@@ -19,7 +22,7 @@ mod toast_manager;
 use toast_manager::ToastManager;
 
 pub struct PlayingScene {
-    piano_keyboard: PianoKeyboard,
+    drum_roll: DrumRoll,
     notes: Notes,
     player: MidiPlayer,
     quad_pipeline: QuadPipeline,
@@ -28,19 +31,19 @@ pub struct PlayingScene {
 
 impl PlayingScene {
     pub fn new(target: &mut Target) -> Self {
-        let piano_keyboard = PianoKeyboard::new(
+        let drum_roll = DrumRoll::new(
             &target.gpu,
             &target.transform_uniform,
             target.window_state.logical_size,
         );
 
-        let mut notes = Notes::new(target, piano_keyboard.keys());
+        let mut notes = Notes::new(target, drum_roll.keys());
 
         let player = MidiPlayer::new(target);
         notes.update(target, player.time_without_lead_in());
 
         Self {
-            piano_keyboard,
+            drum_roll,
             notes,
             player,
             quad_pipeline: QuadPipeline::new(&target.gpu, &target.transform_uniform),
@@ -78,17 +81,18 @@ impl Scene for PlayingScene {
     }
 
     fn resize(&mut self, target: &mut Target) {
-        self.piano_keyboard.resize(target.window_state.logical_size);
-        self.notes.resize(target, self.piano_keyboard.keys());
+        let (width, height) = target.window_state.logical_size.into();
+        self.drum_roll.resize(LogicalSize::new(width, height - 5.0));
+        self.notes.resize(target, self.drum_roll.keys());
     }
 
     fn update(&mut self, target: &mut Target, delta: Duration) {
         if self.player.play_along().are_required_keys_pressed() || !target.config.play_along {
             if let Some(midi_events) = self.player.update(target, delta) {
-                self.piano_keyboard
+                self.drum_roll
                     .file_midi_events(&target.config, &midi_events);
             } else {
-                self.piano_keyboard.reset_notes();
+                self.drum_roll.reset_notes();
             }
         }
 
@@ -99,7 +103,7 @@ impl Scene for PlayingScene {
             self.player.time_without_lead_in() + target.config.playback_offset,
         );
 
-        self.piano_keyboard
+        self.drum_roll
             .update(&target.gpu.queue, target.text_renderer.glyph_brush());
         self.toast_manager.update(target);
     }
@@ -124,7 +128,7 @@ impl Scene for PlayingScene {
         self.notes
             .render(&target.transform_uniform, &mut render_pass);
 
-        self.piano_keyboard
+        self.drum_roll
             .render(&target.transform_uniform, &mut render_pass);
 
         self.quad_pipeline
@@ -177,7 +181,7 @@ impl Scene for PlayingScene {
             ),
         }
 
-        self.piano_keyboard.user_midi_event(event);
+        self.drum_roll.user_midi_event(event);
     }
 }
 

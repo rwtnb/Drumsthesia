@@ -31,7 +31,7 @@ impl iced_style::pick_list::StyleSheet for PickListStyle {
     }
 
     fn hovered(&self, _style: &Self::Style) -> pick_list::Appearance {
-        let accent = Color::from_rgba8(160, 81, 255, 1.0);
+        let accent = Color::from_rgba8(128, 128, 128, 1.0);
         pick_list::Appearance {
             text_color: Color::WHITE,
             background: iced_graphics::Background::Color(Color::BLACK),
@@ -52,7 +52,7 @@ impl iced_style::menu::StyleSheet for MenuStyle {
     type Style = iced_style::Theme;
 
     fn appearance(&self, _style: &Self::Style) -> iced_style::menu::Appearance {
-        let accent = Color::from_rgba8(160, 81, 255, 1.0);
+        let accent = Color::from_rgba8(128, 128, 128, 1.0);
         iced_style::menu::Appearance {
             text_color: Color::WHITE,
             background: iced_graphics::Background::Color(Color::BLACK),
@@ -85,7 +85,7 @@ impl iced_style::button::StyleSheet for ButtonStyle {
     }
 
     fn hovered(&self, _style: &Self::Style) -> button::Appearance {
-        let accent = Color::from_rgba8(160, 81, 255, 1.0);
+        let accent = Color::from_rgba8(128, 128, 128, 1.0);
         button::Appearance {
             text_color: Color::WHITE,
             border_color: accent,
@@ -106,7 +106,7 @@ impl iced_style::checkbox::StyleSheet for CheckboxStyle {
     type Style = iced_style::Theme;
 
     fn active(&self, _style: &Self::Style, is_checked: bool) -> iced_style::checkbox::Appearance {
-        let active = Color::from_rgba8(160, 81, 255, 1.0);
+        let active = Color::from_rgba8(128, 128, 128, 1.0);
         iced_style::checkbox::Appearance {
             background: if is_checked { active } else { SURFACE }.into(),
             text_color: Some(Color::WHITE),
@@ -118,7 +118,7 @@ impl iced_style::checkbox::StyleSheet for CheckboxStyle {
     }
 
     fn hovered(&self, style: &Self::Style, is_checked: bool) -> iced_style::checkbox::Appearance {
-        let active = Color::from_rgba8(160, 81, 255, 1.0);
+        let active = Color::from_rgba8(128, 128, 128, 1.0);
         iced_style::checkbox::Appearance {
             background: Color {
                 a: 0.8,

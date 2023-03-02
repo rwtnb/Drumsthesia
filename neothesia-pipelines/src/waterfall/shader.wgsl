@@ -40,12 +40,12 @@ let speed: f32 = 400.0;
 @vertex
 fn vs_main(vertex: Vertex, note: NoteInstance) -> VertexOutput {
     let speed = speed / view_uniform.scale;
-    let size = vec2<f32>(note.size.x, note.size.y * speed);
+    let size = vec2<f32>(note.size.x * speed, note.size.y);
 
-    let y = view_uniform.size.y - view_uniform.size.y / 5.0 - size.y / 2.0;
-    let pos = vec2<f32>(note.n_position.x, y) - vec2<f32>(0.0, size.y / 2.0);
+    let x = view_uniform.size.x / 5.0;
+    let pos = vec2<f32>(x, note.n_position.y) - vec2<f32>(size.x / 2.0, view_uniform.size.y);
 
-    let offset = vec2<f32>(0.0, -(note.n_position.y - time_uniform.time) * speed);
+    let offset = vec2<f32>((note.n_position.x - time_uniform.time) * speed,view_uniform.size.y);
 
     let transform = mat4x4<f32>(
         vec4<f32>(size.x, 0.0, 0.0, 0.0),
