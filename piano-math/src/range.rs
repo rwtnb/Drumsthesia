@@ -11,14 +11,6 @@ const KEY_AIS: u8 = 10;
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct KeyId(u8);
 
-impl KeyId {
-    pub fn is_black(&self) -> bool {
-        let key = self.0 % 12;
-        key == KEY_CIS || key == KEY_DIS || key == KEY_FIS || key == KEY_GIS || key == KEY_AIS
-    }
-}
-
-/// Describe used slice of piano keyboard
 pub struct KeyboardRange {
     range: Range<u8>,
 

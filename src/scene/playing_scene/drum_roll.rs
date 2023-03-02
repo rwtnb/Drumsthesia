@@ -143,21 +143,21 @@ impl DrumRoll {
 
     /// Reupload instances to GPU
     fn reupload(&mut self, queue: &wgpu::Queue) {
-        self.quad_pipeline.with_instances_mut(queue, |instances| {
-            instances.clear();
-
-            // black_background
-            instances.push(QuadInstance {
-                position: self.pos.into(),
-                size: self.size.into(),
-                color: [0.2, 0.2, 0.2, 1.0],
-                ..Default::default()
-            });
-
-            for key in self.lanes.iter() {
-                instances.push(QuadInstance::from(key));
-            }
-        });
+//       self.quad_pipeline.with_instances_mut(queue, |instances| {
+//           instances.clear();
+//
+//           // black_background
+//           instances.push(QuadInstance {
+//               position: self.pos.into(),
+//               size: self.size.into(),
+//               color: [0.0, 0.0, 0.0, 0.0],
+//               ..Default::default()
+//           });
+//
+//           for key in self.lanes.iter() {
+//               instances.push(QuadInstance::from(key));
+//           }
+//       });
         self.should_reupload = false;
     }
 
@@ -166,21 +166,22 @@ impl DrumRoll {
             self.reupload(queue);
         }
 
-        for (id, key) in self.lanes.iter().enumerate() {
-            let Point { x, y } = key.pos;
-            let Size { w, h } = key.size;
+        for lane in self.lanes.iter() {
+            let Point { x, y } = lane.pos;
+            let Size { w, h } = lane.size;
 
             let size = h * 0.7;
 
             brush.queue(Section {
-                screen_position: (x + 5.0, y + (size / 4.0)),
-                text: vec![wgpu_glyph::Text::new(key.label())
+                screen_position: (x + w, y + (h / 2.0)),
+                text: vec![wgpu_glyph::Text::new(lane.label())
                     .with_color([1.0, 1.0, 1.0, 0.5])
                     .with_scale(size)],
-                bounds: (f32::INFINITY, h),
+                bounds: (w, h),
                 layout: wgpu_glyph::Layout::default()
-                    .h_align(wgpu_glyph::HorizontalAlign::Left)
-                    .v_align(wgpu_glyph::VerticalAlign::Top),
+                    .h_align(wgpu_glyph::HorizontalAlign::Right)
+                    .v_align(wgpu_glyph::VerticalAlign::Center),
+
             })
         }
     }
