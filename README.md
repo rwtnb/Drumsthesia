@@ -1,4 +1,4 @@
-# Drumsthesia
+# Drumsthesia (Work in progress)
 A shameless copy of [Neothesia](https://github.com/PolyMeilex/Neothesia) adapted for e-Drums.
 
 ## Thanks to 

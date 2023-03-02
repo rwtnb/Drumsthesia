@@ -11,26 +11,27 @@ pub struct Notes {
 }
 
 impl Notes {
-    pub fn new(target: &mut Target, keys: &[Lane]) -> Self {
+    pub fn new(target: &mut Target, lanes: &[Lane]) -> Self {
         let notes_pipeline = WaterfallPipeline::new(
             &target.gpu,
             &target.transform_uniform,
             target.midi_file.as_ref().unwrap().merged_track.notes.len(),
         );
         let mut notes = Self { notes_pipeline };
-        notes.resize(target, keys);
+        notes.resize(target, lanes);
         notes
     }
 
-    pub fn resize(&mut self, target: &mut Target, keys: &[Lane]) {
+    pub fn resize(&mut self, target: &mut Target, lanes: &[Lane]) {
         let midi = &target.midi_file.as_ref().unwrap();
 
         let mut instances = Vec::new();
 
         for note in midi.merged_track.notes.iter() {
-            if note.channel == 9 && 27 <= note.note && note.note <= 53 {
-                let key = &keys[note.note as usize - 27];
+            let lane = lanes.iter().find(|i| i.notes.contains(&note.note));
 
+            if lane.is_some() && note.channel == 9 {
+                let lane = lane.unwrap();
                 let color_schema = &target.config.color_schema;
 
                 let color = &color_schema[note.track_id % color_schema.len()];
@@ -38,10 +39,10 @@ impl Notes {
                 let color: Color = color.into();
 
                 instances.push(NoteInstance {
-                    position: [note.start.as_secs_f32(), key.y_position()],
-                    size: [0.1, key.height() - 1.0], 
+                    position: [note.start.as_secs_f32(), lane.y_position() + 4.0],
+                    size: [0.1, lane.height() - 10.0],
                     color: color.into_linear_rgb(),
-                    radius: key.height() * 0.2,
+                    radius: 0.0,
                 });
             }
         }

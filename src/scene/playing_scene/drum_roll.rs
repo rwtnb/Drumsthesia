@@ -7,7 +7,6 @@ use crate::{
 };
 
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
-use piano_math::range::KeyboardRange;
 use wgpu_glyph::{GlyphBrush, Section};
 
 mod lane;
@@ -19,7 +18,7 @@ pub struct DrumRoll {
     size: Size<f32>,
 
     lanes: Vec<Lane>,
-    range: KeyboardRange,
+    notes: [u8; 20],
 
     quad_pipeline: QuadPipeline,
     should_reupload: bool,
@@ -31,18 +30,15 @@ impl DrumRoll {
         transform_uniform: &Uniform<TransformUniform>,
         window_size: winit::dpi::LogicalSize<f32>,
     ) -> Self {
-        let range = KeyboardRange::standard_88_keys();
-
         let quad_pipeline = QuadPipeline::new(gpu, transform_uniform);
-        let lanes: Vec<Lane> = range.iter().map(|_| Lane::new()).collect();
+        let notes = [ 49, 57, 51, 59, 53, 55, 52, 50, 48, 47, 45, 43, 41, 46, 42, 38, 40, 44, 36, 35 ];
+        let lanes = (0..13).map(|i| Lane::new(i)).collect();
 
         let mut drum_roll = Self {
             pos: Point { x: 0.0, y: 5.0 },
             size: Default::default(),
-
             lanes,
-            range,
-
+            notes, 
             quad_pipeline,
             should_reupload: false,
         };
@@ -51,29 +47,40 @@ impl DrumRoll {
         drum_roll
     }
 
-    pub fn keys(&self) -> &[Lane] {
+    pub fn lanes(&self) -> &[Lane] {
         &self.lanes
+    }
+
+    pub fn lane_id_for_note(&self, note: u8) -> usize {
+        self.lanes.iter()
+            .enumerate()
+            .find(|i| i.1.notes.contains(&note))
+            .map(|i| i.0)
+            .unwrap()
     }
 
     /// Calculate positions of keys
     fn calculate_positions(&mut self) {
-        let neutral_height = self.size.h / self.range.count() as f32;
-        let keyboard = piano_math::standard_88_keys(self.size.w, neutral_height);
+        let lane_height = self.size.h / self.lanes.len() as f32;
+        let mut offset = 0.0;
 
-        for (id, key) in keyboard.keys.iter().enumerate() {
-            self.lanes[id].note_id = key.note_id();
+        for i in 0..self.lanes.len() {
+            self.lanes[i].pos = self.pos;
+            self.lanes[i].pos.y += offset;
 
-            self.lanes[id].pos = self.pos;
-            self.lanes[id].pos.y += key.y();
+            self.lanes[i].size = Size {
+                w: self.size.w * 0.33333,
+                h: lane_height,
+            };
 
-            self.lanes[id].size = key.size().into();
+            offset += lane_height;
         }
 
         self.queue_reupload();
     }
 
     pub fn resize(&mut self, window_size: winit::dpi::LogicalSize<f32>) {
-        self.size.w = window_size.width * 0.2;
+        self.size.w = window_size.width;
         self.size.h = window_size.height - 5.0;
 
         self.pos.x = 0.0;
@@ -85,51 +92,19 @@ impl DrumRoll {
     pub fn user_midi_event(&mut self, event: &crate::MidiEvent) {
         match event {
             crate::MidiEvent::NoteOn { key, .. } => {
-                if self.range.contains(*key) {
-                    let id = *key as usize - 27;
-                    let key = &mut self.lanes[id];
-
-                    key.set_pressed_by_user(true);
+                if self.notes.contains(key) {
+                    let i = self.lane_id_for_note(*key);
+                    self.lanes[i].set_pressed_by_user(true);
                     self.queue_reupload();
                 }
             }
             crate::MidiEvent::NoteOff { key, .. } => {
-                if self.range.contains(*key) {
-                    let id = *key as usize - 27;
-                    let key = &mut self.lanes[id];
-
-                    key.set_pressed_by_user(false);
+                if self.notes.contains(key) {
+                    let i = self.lane_id_for_note(*key);
+                    self.lanes[i].set_pressed_by_user(false);
                     self.queue_reupload();
                 }
             }
-        }
-    }
-
-    pub fn file_midi_events(&mut self, config: &Config, events: &[lib_midi::MidiEvent]) {
-        for e in events {
-            match e.message {
-                lib_midi::midly::MidiMessage::NoteOn { key, .. } => {
-                    let key = key.as_int();
-
-                    if self.range.contains(key) && e.channel == 9 {
-                        let id = key as usize - 27;
-                        let key = &mut self.lanes[id];
-
-                        let color = &config.color_schema[e.track_id % config.color_schema.len()];
-                        self.queue_reupload();
-                    }
-                }
-                lib_midi::midly::MidiMessage::NoteOff { key, .. } => {
-                    let key = key.as_int();
-                    if self.range.contains(key) && e.channel == 9 {
-                        let id = key as usize - 27;
-                        let key = &mut self.lanes[id];
-
-                        self.queue_reupload();
-                    }
-                }
-                _ => continue,
-            };
         }
     }
 
@@ -143,21 +118,40 @@ impl DrumRoll {
 
     /// Reupload instances to GPU
     fn reupload(&mut self, queue: &wgpu::Queue) {
-//       self.quad_pipeline.with_instances_mut(queue, |instances| {
-//           instances.clear();
-//
-//           // black_background
-//           instances.push(QuadInstance {
-//               position: self.pos.into(),
-//               size: self.size.into(),
-//               color: [0.0, 0.0, 0.0, 0.0],
-//               ..Default::default()
-//           });
-//
-//           for key in self.lanes.iter() {
-//               instances.push(QuadInstance::from(key));
-//           }
-//       });
+        self.quad_pipeline.with_instances_mut(queue, |instances| {
+            instances.clear();
+
+            instances.push(QuadInstance {
+                position: [self.size.w * 0.33333, 5.0],
+                size: [1.0, self.size.h],
+                color: [0.88, 0.67, 0.03, 0.5],
+                ..Default::default()
+            });
+
+            for (i, key) in self.lanes.iter().enumerate() {
+                let lane_color = if i % 2 == 0 {
+                    [1.0, 1.0, 1.0, 0.02]
+                } else {
+                    [1.0, 1.0, 1.0, 0.022]
+                };
+
+                instances.push(QuadInstance {
+                    position: key.pos.into(),
+                    size: [self.size.w, key.size.h],
+                    color: lane_color,
+                    ..Default::default()
+                });
+
+                instances.push(QuadInstance {
+                    position: [key.pos.x, key.pos.y - 1.0],
+                    size: [self.size.w, 1.0],
+                    color: [1.0, 1.0, 1.0, 0.024],
+                    ..Default::default()
+                });
+
+                instances.push(QuadInstance::from(key));
+            }
+        });
         self.should_reupload = false;
     }
 
@@ -173,15 +167,14 @@ impl DrumRoll {
             let size = h * 0.7;
 
             brush.queue(Section {
-                screen_position: (x + w, y + (h / 2.0)),
+                screen_position: (x + 10.0, y + (h / 2.0)),
                 text: vec![wgpu_glyph::Text::new(lane.label())
                     .with_color([1.0, 1.0, 1.0, 0.5])
                     .with_scale(size)],
                 bounds: (w, h),
                 layout: wgpu_glyph::Layout::default()
-                    .h_align(wgpu_glyph::HorizontalAlign::Right)
+                    .h_align(wgpu_glyph::HorizontalAlign::Left)
                     .v_align(wgpu_glyph::VerticalAlign::Center),
-
             })
         }
     }

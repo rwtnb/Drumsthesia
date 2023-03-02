@@ -252,8 +252,8 @@ impl<'a> Step {
     }
 
     fn loading(data: &'a Data) -> Element<'a, Message> {
-        let column = col![image(data.logo_handle.clone()), text("Loading...").size(30)]
-            .spacing(40)
+        let column = col![image(data.logo_handle.clone()), text("Loading...").size(50)]
+            .spacing(30)
             .align_items(Alignment::Center);
 
         center_x(top_padded(column)).into()

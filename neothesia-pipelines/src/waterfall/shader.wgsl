@@ -42,7 +42,7 @@ fn vs_main(vertex: Vertex, note: NoteInstance) -> VertexOutput {
     let speed = speed / view_uniform.scale;
     let size = vec2<f32>(note.size.x * speed, note.size.y);
 
-    let x = view_uniform.size.x / 5.0;
+    let x = view_uniform.size.x / 3.0;
     let pos = vec2<f32>(x, note.n_position.y) - vec2<f32>(size.x / 2.0, view_uniform.size.y);
 
     let offset = vec2<f32>((note.n_position.x - time_uniform.time) * speed,view_uniform.size.y);

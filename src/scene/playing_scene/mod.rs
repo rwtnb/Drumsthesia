@@ -37,7 +37,7 @@ impl PlayingScene {
             target.window_state.logical_size,
         );
 
-        let mut notes = Notes::new(target, drum_roll.keys());
+        let mut notes = Notes::new(target, drum_roll.lanes());
 
         let player = MidiPlayer::new(target);
         notes.update(target, player.time_without_lead_in());
@@ -59,7 +59,7 @@ impl PlayingScene {
             vec![QuadInstance {
                 position: [0.0, 0.0],
                 size: [size_x, 5.0],
-                color: Color::from_rgba8(56, 145, 255, 1.0).into_linear_rgba(),
+                color: Color::from_rgba8(139, 0, 0, 1.0).into_linear_rgba(),
                 ..Default::default()
             }],
         );
@@ -83,14 +83,13 @@ impl Scene for PlayingScene {
     fn resize(&mut self, target: &mut Target) {
         let (width, height) = target.window_state.logical_size.into();
         self.drum_roll.resize(LogicalSize::new(width, height - 5.0));
-        self.notes.resize(target, self.drum_roll.keys());
+        self.notes.resize(target, self.drum_roll.lanes());
     }
 
     fn update(&mut self, target: &mut Target, delta: Duration) {
         if self.player.play_along().are_required_keys_pressed() || !target.config.play_along {
             if let Some(midi_events) = self.player.update(target, delta) {
-                self.drum_roll
-                    .file_midi_events(&target.config, &midi_events);
+                // self.drum_roll.file_midi_events(&target.config, &midi_events);
             } else {
                 self.drum_roll.reset_notes();
             }
@@ -125,10 +124,10 @@ impl Scene for PlayingScene {
                 depth_stencil_attachment: None,
             });
 
-        self.notes
+        self.drum_roll
             .render(&target.transform_uniform, &mut render_pass);
 
-        self.drum_roll
+        self.notes
             .render(&target.transform_uniform, &mut render_pass);
 
         self.quad_pipeline

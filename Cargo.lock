@@ -1857,7 +1857,6 @@ dependencies = [
  "num",
  "objc",
  "oxisynth",
- "piano-math",
  "rfd",
  "ron",
  "serde",
@@ -2291,10 +2290,6 @@ checksum = "e1fb5f6f826b772a8d4c0394209441e7d37cbbb967ae9c7e0e8134365c9ee676"
 dependencies = [
  "siphasher",
 ]
-
-[[package]]
-name = "piano-math"
-version = "0.1.0"
 
 [[package]]
 name = "pin-project-lite"
