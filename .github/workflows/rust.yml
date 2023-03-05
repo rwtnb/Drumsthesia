@@ -15,9 +15,9 @@ jobs:
           command: build
           args: --release 
       - name: Chmod +x
-        run: chmod +x target/release/neothesia
+        run: chmod +x target/release/drumsthesia
       - name: zip binary
-        run: zip -rj app.zip target/release/neothesia
+        run: zip -rj app.zip target/release/drumsthesia
       - uses: actions/upload-artifact@v2
         with:
           name: ubuntu-artifact
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: windows-artifact
-          path: target/release/neothesia.exe
+          path: target/release/drumsthesia.exe
   build_macos:
     runs-on: macos-latest
     steps:
@@ -45,9 +45,9 @@ jobs:
           command: build
           args: --release 
       - name: copy binary
-        run: cp target/release/neothesia .github/app/Neothesia.app/Contents/MacOS
+        run: cp target/release/drumsthesia .github/app/Drumsthesia.app/Contents/MacOS
       - name: zip binary
-        run: cd .github/app/ && zip -r app.zip Neothesia.app && cd ../..
+        run: cd .github/app/ && zip -r app.zip Drumsthesia.app && cd ../..
       - uses: actions/upload-artifact@v2
         with:
           name: macos-artifact
