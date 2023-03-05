@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 use crate::{
-    config::Config,
     utils::{Point, Size},
     TransformUniform, Uniform,
 };
@@ -18,7 +15,6 @@ pub struct DrumRoll {
     size: Size<f32>,
 
     lanes: Vec<Lane>,
-    notes: [u8; 20],
 
     quad_pipeline: QuadPipeline,
     should_reupload: bool,
@@ -26,19 +22,18 @@ pub struct DrumRoll {
 
 impl DrumRoll {
     pub fn new(
+        track_notes: Vec<u8>,
         gpu: &Gpu,
         transform_uniform: &Uniform<TransformUniform>,
         window_size: winit::dpi::LogicalSize<f32>,
     ) -> Self {
         let quad_pipeline = QuadPipeline::new(gpu, transform_uniform);
-        let notes = [ 49, 57, 51, 59, 53, 55, 52, 50, 48, 47, 45, 43, 41, 46, 42, 38, 40, 44, 36, 35 ];
-        let lanes = (0..13).map(|i| Lane::new(i)).collect();
+        let lanes = (0..11).map(|i| Lane::new(i, track_notes.clone())).collect();
 
         let mut drum_roll = Self {
             pos: Point { x: 0.0, y: 5.0 },
             size: Default::default(),
             lanes,
-            notes, 
             quad_pipeline,
             should_reupload: false,
         };
@@ -51,20 +46,25 @@ impl DrumRoll {
         &self.lanes
     }
 
-    pub fn lane_id_for_note(&self, note: u8) -> usize {
-        self.lanes.iter()
+    pub fn lane_id_for_note(&self, note: u8) -> Option<usize> {
+        self.lanes
+            .iter()
             .enumerate()
-            .find(|i| i.1.notes.contains(&note))
+            .find(|i| i.1.mapping.accept_note(note))
             .map(|i| i.0)
-            .unwrap()
     }
 
     /// Calculate positions of keys
     fn calculate_positions(&mut self) {
-        let lane_height = self.size.h / self.lanes.len() as f32;
+        let visible_count = self.lanes.iter().filter(|i| i.visible).count();
+        let lane_height = self.size.h / visible_count as f32;
         let mut offset = 0.0;
 
         for i in 0..self.lanes.len() {
+            if !self.lanes[i].visible {
+                continue;
+            }
+
             self.lanes[i].pos = self.pos;
             self.lanes[i].pos.y += offset;
 
@@ -92,15 +92,13 @@ impl DrumRoll {
     pub fn user_midi_event(&mut self, event: &crate::MidiEvent) {
         match event {
             crate::MidiEvent::NoteOn { key, .. } => {
-                if self.notes.contains(key) {
-                    let i = self.lane_id_for_note(*key);
+                if let Some(i) = self.lane_id_for_note(*key) {
                     self.lanes[i].set_pressed_by_user(true);
                     self.queue_reupload();
                 }
             }
             crate::MidiEvent::NoteOff { key, .. } => {
-                if self.notes.contains(key) {
-                    let i = self.lane_id_for_note(*key);
+                if let Some(i) = self.lane_id_for_note(*key) {
                     self.lanes[i].set_pressed_by_user(false);
                     self.queue_reupload();
                 }
@@ -164,17 +162,17 @@ impl DrumRoll {
             let Point { x, y } = lane.pos;
             let Size { w, h } = lane.size;
 
-            let size = h * 0.7;
+            let size = h * 0.2;
 
             brush.queue(Section {
-                screen_position: (x + 10.0, y + (h / 2.0)),
-                text: vec![wgpu_glyph::Text::new(lane.label())
-                    .with_color([1.0, 1.0, 1.0, 0.5])
+                screen_position: (x + 5.0, y + h - 5.0),
+                text: vec![wgpu_glyph::Text::new(lane.label().to_uppercase().as_str())
+                    .with_color([1.0, 1.0, 1.0, 0.3])
                     .with_scale(size)],
                 bounds: (w, h),
                 layout: wgpu_glyph::Layout::default()
                     .h_align(wgpu_glyph::HorizontalAlign::Left)
-                    .v_align(wgpu_glyph::VerticalAlign::Center),
+                    .v_align(wgpu_glyph::VerticalAlign::Bottom),
             })
         }
     }

@@ -40,6 +40,7 @@ pub enum Message {
     Play,
 
     PlayAlongCheckbox(bool),
+    MuteDrumsCheckbox(bool),
 
     GoToPage(Step),
     ExitApp,
@@ -55,6 +56,7 @@ struct Data {
     selected_input: Option<InputDescriptor>,
 
     play_along: bool,
+    mute_drums: bool,
     is_loading: bool,
 
     logo_handle: ImageHandle,
@@ -79,6 +81,7 @@ impl AppUi {
                 selected_input: None,
 
                 play_along: target.config.play_along,
+                mute_drums: target.config.mute_drums,
                 is_loading: false,
 
                 logo_handle: ImageHandle::from_memory(include_bytes!("../img/banner.png").to_vec()),
@@ -153,6 +156,10 @@ impl Program for AppUi {
                 target.config.play_along = v;
                 self.data.play_along = v;
             }
+            Message::MuteDrumsCheckbox(v) => {
+                target.config.mute_drums = v;
+                self.data.mute_drums = v;
+            }
             Message::Tick => {
                 self.data.outputs = target.output_manager.borrow().outputs();
                 self.data.inputs = target.input_manager.inputs();
@@ -207,6 +214,10 @@ impl Program for AppUi {
                 },
                 KeyCode::A => match self.current {
                     Step::Main => Some(Message::PlayAlongCheckbox(!self.data.play_along)),
+                    _ => None,
+                },
+                KeyCode::D => match self.current {
+                    Step::Main => Some(Message::MuteDrumsCheckbox(!self.data.mute_drums)),
                     _ => None,
                 },
                 KeyCode::Enter => match self.current {
@@ -306,7 +317,10 @@ impl<'a> Step {
         let mut content = top_padded(column);
 
         if data.midi_file.is_some() {
-            let play_along = checkbox("PlayAlong", data.play_along, Message::PlayAlongCheckbox)
+            let mute_drums = checkbox("Mute Drums", data.mute_drums, Message::MuteDrumsCheckbox)
+                .style(theme::checkbox());
+
+            let play_along = checkbox("Play Along", data.play_along, Message::PlayAlongCheckbox)
                 .style(theme::checkbox());
 
             let play = neo_button("Play")
@@ -314,7 +328,7 @@ impl<'a> Step {
                 .min_width(80)
                 .on_press(Message::Play);
 
-            let row = row![play_along, play]
+            let row = row![mute_drums, play_along, play]
                 .spacing(20)
                 .align_items(Alignment::Center);
 

@@ -1,9 +1,9 @@
 [package]
-name = "neothesia"
-version = "0.0.16"
-authors = ["Poly <marynczak.bartlomiej@gmail.com>"]
+name = "drumsthesia"
+version = "0.0.1"
+authors = ["Rodrigo Watanabe <rodrigo@wtnb.io>"]
 edition = "2021"
-default-run = "neothesia"
+default-run = "drumsthesia"
 
 [workspace]
 members = [
@@ -25,9 +25,6 @@ app = [
     "iced_style",
     "play_along",
 ]
-record = ["mpeg_encoder", "build-ffmpeg"]
-# Download and compile ffmpeg
-build-ffmpeg = ["mpeg_encoder/build"]
 
 play_along = []
 
@@ -68,25 +65,19 @@ iced_graphics = { git = "https://github.com/iced-rs/iced.git", rev = "da244ff804
 iced_style = { git = "https://github.com/iced-rs/iced.git", rev = "da244ff8048e0b339c1502372894a2460a637241", optional = true }
 
 cpal = { version = "0.14", optional = true }
-fluidlite = { version = "0.2", features = ["builtin"], optional = true }
+fluidlite = { version = "0.2", features = ["builtin", "bindgen"], optional = true }
 oxisynth = { version = "0.0.3", optional = true }
 
 ron = "0.8"
 serde = { version = "1.0", features = ["serde_derive"] }
 
-mpeg_encoder = { git = "https://github.com/PolyMeilex/mpeg_encoder_next.git", optional = true }
 midi = "0.1"
 num = "0.4"
 async-thread = "0.1"
-# mpeg_encoder = {path="../mpeg_encoder_next", optional=true}
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc = "0.2"
 
 [[bin]]
-name = "neothesia-cli"
-required-features = ["record"]
-
-[[bin]]
-name = "neothesia"
+name = "drumsthesia"
 required-features = ["app"]

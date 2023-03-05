@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use crate::output_manager::{OutputConnection, OutputDescriptor};
 
+use iced_native::program;
 use lib_midi::ActiveNote;
 use midi::ToRawMessages;
 use num::FromPrimitive;
@@ -48,6 +49,18 @@ impl MidiBackend {
 impl OutputConnection for MidiOutputConnection {
     fn midi_event(&mut self, msg: midi::Message) {
         match &msg {
+            midi::Message::ProgramChange(ch, program) => {
+                use midi::utils::{mask7, status_byte};
+
+                let channel = channel_to_u8(ch);
+                let sb = status_byte(
+                    midi::constants::PROGRAM_CHANGE,
+                    midi::Channel::from_u8(channel).unwrap(),
+                );
+
+                let data = [sb, mask7(*program)];
+                self.conn.send(&data).ok();
+            },
             midi::Message::NoteOff(ch, key, _) => {
                 let channel = channel_to_u8(ch);
                 self.active_notes.remove(&ActiveNote { key: *key, channel });

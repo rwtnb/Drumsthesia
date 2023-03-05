@@ -23,26 +23,36 @@ impl Notes {
     }
 
     pub fn resize(&mut self, target: &mut Target, lanes: &[Lane]) {
+        let window_height = target.window_state.logical_size.height;
         let midi = &target.midi_file.as_ref().unwrap();
 
         let mut instances = Vec::new();
 
         for note in midi.merged_track.notes.iter() {
-            let lane = lanes.iter().find(|i| i.notes.contains(&note.note));
+            let lane = lanes.iter().find(|i| i.mapping.accept_note(note.note));
 
-            if lane.is_some() && note.channel == 9 {
+            if lane.is_none() && note.channel == 9 {
+                println!("missing mapping for note {}", note.note);
+            }
+
+            if lane.is_some() && note.channel == 9  {
                 let lane = lane.unwrap();
-                let color_schema = &target.config.color_schema;
-
-                let color = &color_schema[note.track_id % color_schema.len()];
-                let color = color.base;
-                let color: Color = color.into();
+                let color: Color = lane.mapping.color.into();
+                let x = note.start.as_secs_f32();
+                let h = lane.height() * 0.5;
+                let y = lane.y_position() + (lane.height() / 2.0) - (h / 2.0);
+                let w = if note.velocity <= 40 {
+                    lane.height() * 0.25
+                } else {
+                    h
+                };
 
                 instances.push(NoteInstance {
-                    position: [note.start.as_secs_f32(), lane.y_position() + 4.0],
-                    size: [0.1, lane.height() - 10.0],
+                    position: [x, y],
+                    size: [w, h],
                     color: color.into_linear_rgb(),
-                    radius: 0.0,
+                    radius: h * 0.1,
+                    spacing: (window_height / 720.0) * 2.0
                 });
             }
         }

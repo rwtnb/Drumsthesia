@@ -1,6 +1,6 @@
 #![cfg(feature = "app")]
 
-use neothesia::{
+use drumsthesia::{
     midi_event::MidiEvent,
     scene::{menu_scene, playing_scene, scene_manager, SceneType},
     target::Target,
@@ -14,7 +14,7 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
 };
 
-pub struct Neothesia {
+pub struct Drumsthesia {
     pub target: Target,
     surface: Surface,
 
@@ -23,7 +23,7 @@ pub struct Neothesia {
     pub game_scene: scene_manager::SceneManager,
 }
 
-impl Neothesia {
+impl Drumsthesia {
     pub fn new(mut target: Target, surface: Surface) -> Self {
         let game_scene = menu_scene::MenuScene::new(&mut target);
         let mut game_scene = scene_manager::SceneManager::new(game_scene);
@@ -169,7 +169,7 @@ fn main() {
 
     let (event_loop, target, surface) = init(builder);
 
-    let mut app = Neothesia::new(target, surface);
+    let mut app = Drumsthesia::new(target, surface);
 
     // Investigate:
     // https://github.com/gfx-rs/wgpu-rs/pull/306
@@ -231,9 +231,10 @@ pub fn init(builder: winit::window::WindowBuilder) -> (EventLoop<NeothesiaEvent>
 
     let size = window.inner_size();
     let (gpu, surface) =
-        neothesia::block_on(Gpu::for_window(&instance, &window, size.width, size.height)).unwrap();
+        drumsthesia::block_on(Gpu::for_window(&instance, &window, size.width, size.height))
+            .unwrap();
 
-    let proxy = neothesia::EventLoopProxy::new_winit(proxy);
+    let proxy = drumsthesia::EventLoopProxy::new_winit(proxy);
 
     let target = Target::new(window, window_state, proxy, gpu);
 

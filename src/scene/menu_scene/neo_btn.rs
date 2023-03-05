@@ -201,12 +201,12 @@ impl<'a, Message: Clone> Widget<Message, Renderer> for NeoBtn<'a, Message> {
         let colors = if is_mouse_over {
             (
                 Color::from_rgba8(9, 9, 9, 0.6),
-                Color::from_rgba8(128, 128, 128, 1.0)
+                Color::from_rgba8(128, 128, 128, 1.0),
             )
         } else {
             (
                 Color::from_rgba8(17, 17, 17, 0.6),
-                Color::from_rgba8(100, 100, 100, 1.0)
+                Color::from_rgba8(100, 100, 100, 1.0),
             )
         };
 

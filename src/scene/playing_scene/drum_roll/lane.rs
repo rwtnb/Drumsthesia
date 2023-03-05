@@ -1,39 +1,28 @@
 use crate::utils::{Point, Size};
+use crate::scene::playing_scene::midi_mapping::{MidiMapping, get_midi_mapping};
 use neothesia_pipelines::quad::QuadInstance;
 use wgpu_jumpstart::Color;
 
 pub struct Lane {
+    pub id: usize,
     pub pos: Point<f32>,
     pub size: Size<f32>,
-    pub notes: [u8; 2],
-
+    pub mapping: MidiMapping,
+    pub visible: bool,
     pressed_by_user: bool,
 }
 
 impl Lane {
-    pub fn new(id: usize) -> Self {
-        let notes = match id {
-            0 => [49, 57],
-            1 => [51, 59],
-            2 => [53, 53],
-            3 => [55, 55],
-            4 => [52, 52],
-            5 => [50, 48],
-            6 => [47, 45],
-            7 => [43, 41],
-            8 => [46, 46],
-            9 => [42, 42],
-            10 => [38, 40],
-            11 => [44, 44],
-            12 => [36, 35],
-            _ => panic!("invalid lane id"),
-        };
+    pub fn new(id: usize, track_notes: Vec<u8>) -> Self {
+        let mapping = get_midi_mapping(id);
+        let visible = mapping.accept_notes(track_notes);
 
         Self {
+            id,
             pos: Default::default(),
             size: Default::default(),
-            notes,
-
+            mapping,
+            visible,
             pressed_by_user: false,
         }
     }
@@ -59,38 +48,16 @@ impl Lane {
     }
 
     pub fn label(&self) -> &str {
-        match self.notes[0] {
-            49 => "Crash Cymbal",
-            57 => "Crash Cymbal",
-            51 => "Ride Cymbal",
-            59 => "Ride Cymbal",
-            53 => "Ride Bell",
-            55 => "Splash Cymbal",
-            52 => "Chinese Cymbal",
-            50 => "High Tom",
-            48 => "High Tom",
-            47 => "Mid Tom",
-            45 => "Mid Tom",
-            43 => "Low Tom",
-            41 => "Low Tom",
-            46 => "Open Hi-hat",
-            42 => "Closed Hi-hat",
-            38 => "Snare Drum",
-            40 => "Snare Drum",
-            44 => "Pedal Hi-hat",
-            36 => "Bass Drum",
-            35 => "Bass Drum",
-            _ => "Unknown",
-        }
+        self.mapping.name
     }
 }
 
 impl From<&Lane> for QuadInstance {
     fn from(lane: &Lane) -> QuadInstance {
         let color = if lane.pressed_by_user {
-            Color::new(1.0, 1.0, 1.0, 0.05)
+            Color::new(0.2, 0.2, 0.2, 1.0)
         } else {
-            Color::new(0.0, 0.0, 0.0, 0.0)
+            Color::new(0.1, 0.1, 0.1, 1.0)
         };
 
         QuadInstance {

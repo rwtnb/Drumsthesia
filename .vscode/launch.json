@@ -7,17 +7,8 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'neothesia'",
-            "cargo": {
-                "args": [
-                    "run",
-                    "--package=neothesia"
-                ],
-                "filter": {
-                    "name": "neothesia",
-                    "kind": "bin"
-                }
-            },
+            "name": "Debug",
+            "program": "${workspaceRoot}/target/debug/drumsthesia",
             "args": [],
             "cwd": "${workspaceFolder}"
         }

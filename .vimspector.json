@@ -1,0 +1,11 @@
+{
+  "configurations": {
+    "Rust - Test": {
+      "adapter": "CodeLLDB",
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/target/debug/drumsthesia"
+      }
+    }
+  }
+}

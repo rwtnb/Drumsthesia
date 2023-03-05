@@ -44,7 +44,6 @@ impl Midi {
         let mut merged_track: MidiTrack = tracks[0].clone();
 
         for track in tracks.iter().skip(1) {
-
             for n in track.notes.iter().cloned() {
                 merged_track.notes.push(n);
             }

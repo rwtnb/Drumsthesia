@@ -3,6 +3,7 @@ use std::{error::Error, path::Path, sync::mpsc::Receiver};
 use crate::output_manager::{OutputConnection, OutputDescriptor};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use iced_native::program;
 
 #[cfg(all(feature = "fluid-synth", not(feature = "oxi-synth")))]
 const SAMPLES_SIZE: usize = 1410;
@@ -10,6 +11,7 @@ const SAMPLES_SIZE: usize = 1410;
 enum MidiEvent {
     NoteOn { ch: u8, key: u8, vel: u8 },
     NoteOff { ch: u8, key: u8 },
+    ProgramChange { ch: u8, program: u8 },
 }
 
 pub struct SynthBackend {
@@ -43,76 +45,35 @@ impl SynthBackend {
     }
 
     fn run<T: cpal::Sample>(&self, rx: Receiver<MidiEvent>, path: &Path) -> cpal::Stream {
-        #[cfg(all(feature = "fluid-synth", not(feature = "oxi-synth")))]
-        let mut next_value = {
-            use fluidlite::{IsSettings, Settings};
-
-            let synth = {
-                let sample_rate = self.stream_config.sample_rate.0;
-
-                let settings = Settings::new().unwrap();
-
-                let rate = settings.pick::<_, f64>("synth.sample-rate").unwrap();
-                rate.set(sample_rate as f64);
-
-                let synth = fluidlite::Synth::new(settings).unwrap();
-                synth.sfload(path, true).unwrap();
-                synth.set_gain(1.0);
-
-                synth
-            };
-
-            let mut sample_clock = 0;
-            let mut buff: [f32; SAMPLES_SIZE] = [0.0f32; SAMPLES_SIZE];
-
-            move || {
-                let l = buff[sample_clock];
-                let r = buff[sample_clock + 1];
-
-                sample_clock += 2;
-
-                if sample_clock == SAMPLES_SIZE {
-                    synth.write(buff.as_mut()).unwrap();
-                    sample_clock = 0;
-                }
-
-                if let Ok(e) = rx.try_recv() {
-                    match e {
-                        MidiEvent::NoteOn { ch, key, vel } => {
-                            synth.note_on(ch as u32, key as u32, vel as u32).ok();
-                        }
-                        MidiEvent::NoteOff { ch, key } => {
-                            synth.note_off(ch as u32, key as u32).ok();
-                        }
-                    }
-                }
-
-                (l, r)
-            }
-        };
-
-        #[cfg(all(feature = "oxi-synth", not(feature = "fluid-synth")))]
         let mut next_value = {
             let sample_rate = self.stream_config.sample_rate.0 as f32;
 
             let mut synth = oxisynth::Synth::new(oxisynth::SynthDescriptor {
                 sample_rate,
-                gain: 1.0,
+                gain: 0.3,
                 ..Default::default()
             })
             .unwrap();
 
-            {
+            let font_id = {
                 let mut file = std::fs::File::open(path).unwrap();
                 let font = oxisynth::SoundFont::load(&mut file).unwrap();
-                synth.add_font(font, true);
-            }
+                synth.add_font(font, true)
+            };
+
+            synth.program_reset();
 
             move || {
                 let (l, r) = synth.read_next();
 
                 if let Ok(e) = rx.try_recv() {
                     match e {
+                        MidiEvent::ProgramChange { ch, program } => {
+                            match synth.program_select(ch, font_id, 0, program) {
+                                Ok(()) => {},
+                                Err(err) => log::error!("{}", err)
+                            }
+                        }
                         MidiEvent::NoteOn { ch, key, vel } => {
                             synth
                                 .send_event(oxisynth::MidiEvent::NoteOn {
@@ -191,6 +152,14 @@ pub struct SynthOutputConnection {
 impl OutputConnection for SynthOutputConnection {
     fn midi_event(&mut self, msg: midi::Message) {
         match msg {
+            midi::ProgramChange(ch, program) => {
+                self.tx
+                    .send(MidiEvent::ProgramChange {
+                        ch: ch as u8,
+                        program,
+                    })
+                    .ok();
+            }
             midi::NoteOn(ch, key, vel) => {
                 self.tx
                     .send(MidiEvent::NoteOn {

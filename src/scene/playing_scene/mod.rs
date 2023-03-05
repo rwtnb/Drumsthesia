@@ -1,5 +1,5 @@
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
-use std::time::Duration;
+use std::{borrow::BorrowMut, time::Duration};
 use wgpu_jumpstart::Color;
 use winit::{
     dpi::LogicalSize,
@@ -18,6 +18,8 @@ use notes::Notes;
 mod midi_player;
 use midi_player::MidiPlayer;
 
+mod midi_mapping;
+
 mod toast_manager;
 use toast_manager::ToastManager;
 
@@ -31,7 +33,19 @@ pub struct PlayingScene {
 
 impl PlayingScene {
     pub fn new(target: &mut Target) -> Self {
+        let track_notes = target
+            .midi_file
+            .as_ref()
+            .unwrap()
+            .merged_track
+            .notes
+            .iter()
+            .filter(|i| i.channel == 9)
+            .map(|i| i.note)
+            .collect();
+
         let drum_roll = DrumRoll::new(
+            track_notes,
             &target.gpu,
             &target.transform_uniform,
             target.window_state.logical_size,
@@ -53,21 +67,25 @@ impl PlayingScene {
     }
 
     fn update_progresbar(&mut self, target: &mut Target) {
-        let size_x = target.window_state.logical_size.width * self.player.percentage();
+        let ww = target.window_state.logical_size.width;
+        let size_x = ww * self.player.percentage();
         self.quad_pipeline.update_instance_buffer(
             &target.gpu.queue,
-            vec![QuadInstance {
-                position: [0.0, 0.0],
-                size: [size_x, 5.0],
-                color: Color::from_rgba8(139, 0, 0, 1.0).into_linear_rgba(),
-                ..Default::default()
-            }],
+            vec![
+                QuadInstance {
+                    position: [0.0, 0.0],
+                    size: [ww, 5.0],
+                    color: Color::from_rgba8(100, 100, 100, 1.0).into_linear_rgba(),
+                    ..Default::default()
+                },
+                QuadInstance {
+                    position: [0.0, 0.0],
+                    size: [size_x, 5.0],
+                    color: Color::from_rgba8(200, 200, 200, 1.0).into_linear_rgba(),
+                    ..Default::default()
+                },
+            ],
         );
-    }
-
-    #[cfg(feature = "record")]
-    pub fn playback_progress(&self) -> f32 {
-        self.player.percentage() * 100.0
     }
 }
 
@@ -87,10 +105,9 @@ impl Scene for PlayingScene {
     }
 
     fn update(&mut self, target: &mut Target, delta: Duration) {
-        if self.player.play_along().are_required_keys_pressed() || !target.config.play_along {
-            if let Some(midi_events) = self.player.update(target, delta) {
-                // self.drum_roll.file_midi_events(&target.config, &midi_events);
-            } else {
+        let play_along = self.player.play_along_mut();
+        if play_along.are_required_keys_pressed() || !target.config.play_along {
+            if self.player.update(target, delta).is_none() {
                 self.drum_roll.reset_notes();
             }
         }
@@ -104,6 +121,7 @@ impl Scene for PlayingScene {
 
         self.drum_roll
             .update(&target.gpu.queue, target.text_renderer.glyph_brush());
+
         self.toast_manager.update(target);
     }
 
@@ -124,14 +142,14 @@ impl Scene for PlayingScene {
                 depth_stencil_attachment: None,
             });
 
-        self.drum_roll
-            .render(&target.transform_uniform, &mut render_pass);
-
         self.notes
             .render(&target.transform_uniform, &mut render_pass);
 
+        self.drum_roll
+            .render(&target.transform_uniform, &mut render_pass);
+
         self.quad_pipeline
-            .render(&target.transform_uniform, &mut render_pass)
+            .render(&target.transform_uniform, &mut render_pass);
     }
 
     fn window_event(&mut self, target: &mut Target, event: &WindowEvent) {

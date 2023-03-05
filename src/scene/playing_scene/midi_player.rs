@@ -1,6 +1,11 @@
 use crate::{target::Target, OutputManager};
 use num::FromPrimitive;
-use std::{cell::RefCell, collections::HashSet, rc::Rc, time::Duration};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    rc::Rc,
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+};
 use winit::{
     dpi::PhysicalPosition,
     event::{ElementState, KeyboardInput, MouseButton},
@@ -11,12 +16,15 @@ use crate::midi_event::MidiEvent;
 mod rewind_controler;
 use rewind_controler::RewindController;
 
+use super::midi_mapping::{get_midi_mapping, get_midi_mapping_for_note, MidiMapping};
+
 pub struct MidiPlayer {
     playback: lib_midi::PlaybackState,
     rewind_controller: RewindController,
     output_manager: Rc<RefCell<OutputManager>>,
     midi_file: Rc<lib_midi::Midi>,
     play_along: PlayAlong,
+    mute_drums: bool,
 }
 
 impl MidiPlayer {
@@ -29,6 +37,7 @@ impl MidiPlayer {
             output_manager: target.output_manager.clone(),
             midi_file: midi_file.clone(),
             play_along: PlayAlong::default(),
+            mute_drums: target.config.mute_drums,
         };
         player.update(target, Duration::ZERO);
 
@@ -54,17 +63,30 @@ impl MidiPlayer {
             let channel = event.channel;
 
             match event.message {
+                MidiMessage::ProgramChange { program } => {
+                    let event = midi::Message::ProgramChange(
+                        midi::Channel::from_u8(channel).unwrap(),
+                        program.as_int(),
+                    );
+                    self.output_manager.borrow_mut().midi_event(event);
+                }
                 MidiMessage::NoteOn { key, vel } => {
                     let event = midi::Message::NoteOn(
                         midi::Channel::from_u8(event.channel).unwrap(),
                         key.as_int(),
                         vel.as_int(),
                     );
-                    self.output_manager.borrow_mut().midi_event(event);
+
                     if channel == 9 {
                         self.play_along
                             .press_key(KeyPressSource::File, key.as_int(), true);
                     }
+
+                    if self.mute_drums && channel == 9 {
+                        return;
+                    }
+
+                    self.output_manager.borrow_mut().midi_event(event);
                 }
                 MidiMessage::NoteOff { key, .. } => {
                     let event = midi::Message::NoteOff(
@@ -72,11 +94,17 @@ impl MidiPlayer {
                         key.as_int(),
                         0,
                     );
-                    self.output_manager.borrow_mut().midi_event(event);
+
                     if channel == 9 {
                         self.play_along
                             .press_key(KeyPressSource::File, key.as_int(), false);
                     }
+
+                    if self.mute_drums && channel == 9 {
+                        return;
+                    }
+
+                    self.output_manager.borrow_mut().midi_event(event);
                 }
                 _ => {}
             }
@@ -205,23 +233,26 @@ pub enum KeyPressSource {
     User,
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct PlayAlong {
-    required_notes: HashSet<u8>,
+    user_notes: HashSet<usize>,
+    required_notes: HashSet<usize>,
 }
 
 impl PlayAlong {
     fn user_press_key(&mut self, note_id: u8, active: bool) {
-        if active {
-            self.required_notes.remove(&note_id);
+        if let Some(mapping) = get_midi_mapping_for_note(note_id) {
+            if active {
+                self.user_notes.insert(mapping);
+            }
         }
     }
 
     fn file_press_key(&mut self, note_id: u8, active: bool) {
-        if active {
-            self.required_notes.insert(note_id);
-        } else {
-            self.required_notes.remove(&note_id);
+        if let Some(mapping) = get_midi_mapping_for_note(note_id) {
+            if active {
+                self.required_notes.insert(mapping);
+            }
         }
     }
 
@@ -232,8 +263,13 @@ impl PlayAlong {
         }
     }
 
-    pub fn are_required_keys_pressed(&self) -> bool {
-        self.required_notes.is_empty()
+    pub fn are_required_keys_pressed(&mut self) -> bool {
+        if self.user_notes.is_superset(&self.required_notes) && !self.required_notes.is_empty() {
+            self.user_notes.drain();
+            self.required_notes.drain();
+            true
+        } else {
+            self.required_notes.is_empty()
+        }
     }
 }
-
