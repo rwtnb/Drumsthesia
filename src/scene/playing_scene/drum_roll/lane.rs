@@ -4,25 +4,18 @@ use neothesia_pipelines::quad::QuadInstance;
 use wgpu_jumpstart::Color;
 
 pub struct Lane {
-    pub id: usize,
     pub pos: Point<f32>,
     pub size: Size<f32>,
     pub mapping: MidiMapping,
-    pub visible: bool,
     pressed_by_user: bool,
 }
 
 impl Lane {
-    pub fn new(id: usize, track_notes: Vec<u8>) -> Self {
-        let mapping = get_midi_mapping(id);
-        let visible = mapping.accept_notes(track_notes);
-
+    pub fn new(mapping: MidiMapping) -> Self {
         Self {
-            id,
             pos: Default::default(),
             size: Default::default(),
             mapping,
-            visible,
             pressed_by_user: false,
         }
     }
@@ -57,7 +50,7 @@ impl From<&Lane> for QuadInstance {
         let color = if lane.pressed_by_user {
             Color::new(0.2, 0.2, 0.2, 1.0)
         } else {
-            Color::new(0.1, 0.1, 0.1, 1.0)
+            Color::new(0.1, 0.1, 0.1, 0.8)
         };
 
         QuadInstance {

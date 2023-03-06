@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     utils::{Point, Size},
     TransformUniform, Uniform,
@@ -10,12 +12,12 @@ mod lane;
 pub use lane::Lane;
 use wgpu_jumpstart::Gpu;
 
+use super::midi_mapping::{get_midi_mapping_for_note, get_midi_mappings};
+
 pub struct DrumRoll {
     pos: Point<f32>,
     size: Size<f32>,
-
     lanes: Vec<Lane>,
-
     quad_pipeline: QuadPipeline,
     should_reupload: bool,
 }
@@ -28,7 +30,10 @@ impl DrumRoll {
         window_size: winit::dpi::LogicalSize<f32>,
     ) -> Self {
         let quad_pipeline = QuadPipeline::new(gpu, transform_uniform);
-        let lanes = (0..11).map(|i| Lane::new(i, track_notes.clone())).collect();
+        let lanes = get_midi_mappings(track_notes.clone())
+            .iter()
+            .map(|m| Lane::new(*m))
+            .collect();
 
         let mut drum_roll = Self {
             pos: Point { x: 0.0, y: 5.0 },
@@ -42,33 +47,20 @@ impl DrumRoll {
         drum_roll
     }
 
-    pub fn lanes(&self) -> &[Lane] {
+    pub fn lanes(&self) -> &Vec<Lane> {
         &self.lanes
-    }
-
-    pub fn lane_id_for_note(&self, note: u8) -> Option<usize> {
-        self.lanes
-            .iter()
-            .enumerate()
-            .find(|i| i.1.mapping.accept_note(note))
-            .map(|i| i.0)
     }
 
     /// Calculate positions of keys
     fn calculate_positions(&mut self) {
-        let visible_count = self.lanes.iter().filter(|i| i.visible).count();
-        let lane_height = self.size.h / visible_count as f32;
+        let lane_height = self.size.h / self.lanes.len() as f32;
         let mut offset = 0.0;
 
-        for i in 0..self.lanes.len() {
-            if !self.lanes[i].visible {
-                continue;
-            }
+        for lane in self.lanes.iter_mut() {
+            lane.pos = self.pos;
+            lane.pos.y += offset;
 
-            self.lanes[i].pos = self.pos;
-            self.lanes[i].pos.y += offset;
-
-            self.lanes[i].size = Size {
+            lane.size = Size {
                 w: self.size.w * 0.33333,
                 h: lane_height,
             };
@@ -92,14 +84,14 @@ impl DrumRoll {
     pub fn user_midi_event(&mut self, event: &crate::MidiEvent) {
         match event {
             crate::MidiEvent::NoteOn { key, .. } => {
-                if let Some(i) = self.lane_id_for_note(*key) {
-                    self.lanes[i].set_pressed_by_user(true);
+                if let Some(lane) = self.lanes.iter_mut().find(|i| i.mapping.id == *key) {
+                    lane.set_pressed_by_user(true);
                     self.queue_reupload();
                 }
             }
             crate::MidiEvent::NoteOff { key, .. } => {
-                if let Some(i) = self.lane_id_for_note(*key) {
-                    self.lanes[i].set_pressed_by_user(false);
+                if let Some(lane) = self.lanes.iter_mut().find(|i| i.mapping.id == *key) {
+                    lane.set_pressed_by_user(false);
                     self.queue_reupload();
                 }
             }
@@ -126,7 +118,7 @@ impl DrumRoll {
                 ..Default::default()
             });
 
-            for (i, key) in self.lanes.iter().enumerate() {
+            for (i, lane) in self.lanes.iter().enumerate() {
                 let lane_color = if i % 2 == 0 {
                     [1.0, 1.0, 1.0, 0.02]
                 } else {
@@ -134,20 +126,20 @@ impl DrumRoll {
                 };
 
                 instances.push(QuadInstance {
-                    position: key.pos.into(),
-                    size: [self.size.w, key.size.h],
+                    position: lane.pos.into(),
+                    size: [self.size.w, lane.size.h],
                     color: lane_color,
                     ..Default::default()
                 });
 
                 instances.push(QuadInstance {
-                    position: [key.pos.x, key.pos.y - 1.0],
+                    position: [lane.pos.x, lane.pos.y - 1.0],
                     size: [self.size.w, 1.0],
                     color: [1.0, 1.0, 1.0, 0.024],
                     ..Default::default()
                 });
 
-                instances.push(QuadInstance::from(key));
+                instances.push(QuadInstance::from(lane));
             }
         });
         self.should_reupload = false;
@@ -158,20 +150,20 @@ impl DrumRoll {
             self.reupload(queue);
         }
 
-        for lane in self.lanes.iter() {
+        for lane in &self.lanes {
             let Point { x, y } = lane.pos;
             let Size { w, h } = lane.size;
 
-            let size = h * 0.2;
+            let size = h * 0.1;
 
             brush.queue(Section {
-                screen_position: (x + 5.0, y + h - 5.0),
+                screen_position: (x + w - size, y + h - size),
                 text: vec![wgpu_glyph::Text::new(lane.label().to_uppercase().as_str())
-                    .with_color([1.0, 1.0, 1.0, 0.3])
+                    .with_color([1.0, 1.0, 1.0, 0.2])
                     .with_scale(size)],
                 bounds: (w, h),
                 layout: wgpu_glyph::Layout::default()
-                    .h_align(wgpu_glyph::HorizontalAlign::Left)
+                    .h_align(wgpu_glyph::HorizontalAlign::Right)
                     .v_align(wgpu_glyph::VerticalAlign::Bottom),
             })
         }

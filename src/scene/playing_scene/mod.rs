@@ -1,15 +1,24 @@
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
-use std::{borrow::BorrowMut, time::Duration};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    time::Duration,
+};
 use wgpu_jumpstart::Color;
 use winit::{
     dpi::LogicalSize,
     event::{KeyboardInput, WindowEvent},
 };
 
+use self::{
+    marks::Marks,
+    midi_mapping::{get_midi_mapping_for_note, MidiMapping},
+};
+
 use super::{Scene, SceneType};
 use crate::{midi_event::MidiEvent, target::Target, NeothesiaEvent};
 
 mod drum_roll;
+mod marks;
 use drum_roll::DrumRoll;
 
 mod notes;
@@ -26,7 +35,9 @@ use toast_manager::ToastManager;
 pub struct PlayingScene {
     drum_roll: DrumRoll,
     notes: Notes,
+    marks: Marks,
     player: MidiPlayer,
+    played_notes: Vec<(f32, MidiMapping)>,
     quad_pipeline: QuadPipeline,
     toast_manager: ToastManager,
 }
@@ -51,15 +62,20 @@ impl PlayingScene {
             target.window_state.logical_size,
         );
 
-        let mut notes = Notes::new(target, drum_roll.lanes());
-
         let player = MidiPlayer::new(target);
+
+        let mut marks = Marks::new(target, drum_roll.lanes());
+        marks.update(target, player.time_without_lead_in());
+
+        let mut notes = Notes::new(target, drum_roll.lanes());
         notes.update(target, player.time_without_lead_in());
 
         Self {
             drum_roll,
             notes,
+            marks,
             player,
+            played_notes: Default::default(),
             quad_pipeline: QuadPipeline::new(&target.gpu, &target.transform_uniform),
 
             toast_manager: ToastManager::default(),
@@ -102,19 +118,30 @@ impl Scene for PlayingScene {
         let (width, height) = target.window_state.logical_size.into();
         self.drum_roll.resize(LogicalSize::new(width, height - 5.0));
         self.notes.resize(target, self.drum_roll.lanes());
+        self.marks
+            .resize(target, self.drum_roll.lanes(), &self.played_notes);
     }
 
     fn update(&mut self, target: &mut Target, delta: Duration) {
-        let play_along = self.player.play_along_mut();
+        let play_along = self.player.play_along();
         if play_along.are_required_keys_pressed() || !target.config.play_along {
             if self.player.update(target, delta).is_none() {
                 self.drum_roll.reset_notes();
             }
         }
 
+        if self.player.percentage() >= 1.0 {
+            self.player.pause();
+        }
+
         self.update_progresbar(target);
 
         self.notes.update(
+            target,
+            self.player.time_without_lead_in() + target.config.playback_offset,
+        );
+
+        self.marks.update(
             target,
             self.player.time_without_lead_in() + target.config.playback_offset,
         );
@@ -150,6 +177,10 @@ impl Scene for PlayingScene {
 
         self.quad_pipeline
             .render(&target.transform_uniform, &mut render_pass);
+
+        self.marks
+            .render(&target.transform_uniform, &mut render_pass);
+
     }
 
     fn window_event(&mut self, target: &mut Target, event: &WindowEvent) {
@@ -184,14 +215,24 @@ impl Scene for PlayingScene {
         }
     }
 
-    fn midi_event(&mut self, _target: &mut Target, event: &MidiEvent) {
+    fn midi_event(&mut self, target: &mut Target, event: &MidiEvent) {
         match event {
-            MidiEvent::NoteOn { key, .. } => self.player.play_along_mut().press_key(
-                midi_player::KeyPressSource::User,
-                *key,
-                true,
-            ),
-            MidiEvent::NoteOff { key, .. } => self.player.play_along_mut().press_key(
+            MidiEvent::NoteOn { key, .. } => {
+                self.player.play_along().press_key(
+                    midi_player::KeyPressSource::User,
+                    *key,
+                    true,
+                );
+
+                if let Some(mapping) = get_midi_mapping_for_note(*key) {
+                    self.played_notes.push((
+                        self.player.time_without_lead_in() + target.config.playback_offset,
+                        mapping,
+                    ));
+                    self.marks.resize(target, self.drum_roll.lanes(), &self.played_notes);
+                }
+            }
+            MidiEvent::NoteOff { key, .. } => self.player.play_along().press_key(
                 midi_player::KeyPressSource::User,
                 *key,
                 false,

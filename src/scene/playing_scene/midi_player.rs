@@ -1,6 +1,7 @@
 use crate::{target::Target, OutputManager};
 use num::FromPrimitive;
 use std::{
+    borrow::Borrow,
     cell::RefCell,
     collections::{HashMap, HashSet},
     rc::Rc,
@@ -162,7 +163,6 @@ impl MidiPlayer {
     fn set_time(&mut self, time: Duration) {
         self.playback.set_time(time);
 
-        // Discard all of the events till that point
         let events = self
             .playback
             .update(&self.midi_file.merged_track, Duration::ZERO);
@@ -219,11 +219,7 @@ impl MidiPlayer {
 }
 
 impl MidiPlayer {
-    pub fn play_along(&self) -> &PlayAlong {
-        &self.play_along
-    }
-
-    pub fn play_along_mut(&mut self) -> &mut PlayAlong {
+    pub fn play_along(&mut self) -> &mut PlayAlong {
         &mut self.play_along
     }
 }
@@ -235,41 +231,43 @@ pub enum KeyPressSource {
 
 #[derive(Default)]
 pub struct PlayAlong {
-    user_notes: HashSet<usize>,
-    required_notes: HashSet<usize>,
+    required_notes: HashSet<u8>,
+    played_notes: HashSet<u8>,
 }
 
 impl PlayAlong {
-    fn user_press_key(&mut self, note_id: u8, active: bool) {
-        if let Some(mapping) = get_midi_mapping_for_note(note_id) {
+    fn user_press_key(&mut self, note: u8, active: bool) {
+        if let Some(mapping) = get_midi_mapping_for_note(note) {
             if active {
-                self.user_notes.insert(mapping);
+                self.played_notes.insert(mapping.id);
             }
         }
     }
 
-    fn file_press_key(&mut self, note_id: u8, active: bool) {
-        if let Some(mapping) = get_midi_mapping_for_note(note_id) {
+    fn file_press_key(&mut self, note: u8, active: bool) {
+        if let Some(mapping) = get_midi_mapping_for_note(note) {
             if active {
-                self.required_notes.insert(mapping);
+                self.required_notes.insert(mapping.id);
             }
         }
     }
 
-    pub fn press_key(&mut self, src: KeyPressSource, note_id: u8, active: bool) {
+    fn check_and_drain(&mut self) {
+        if !self.required_notes.is_empty() && self.required_notes.is_subset(&self.played_notes) {
+            self.required_notes.drain();
+            self.played_notes.drain();
+        }
+    }
+
+    pub fn press_key(&mut self, src: KeyPressSource, note: u8, active: bool) {
         match src {
-            KeyPressSource::User => self.user_press_key(note_id, active),
-            KeyPressSource::File => self.file_press_key(note_id, active),
+            KeyPressSource::User => self.user_press_key(note, active),
+            KeyPressSource::File => self.file_press_key(note, active),
         }
     }
 
     pub fn are_required_keys_pressed(&mut self) -> bool {
-        if self.user_notes.is_superset(&self.required_notes) && !self.required_notes.is_empty() {
-            self.user_notes.drain();
-            self.required_notes.drain();
-            true
-        } else {
-            self.required_notes.is_empty()
-        }
+        self.check_and_drain();
+        self.required_notes.is_empty()
     }
 }

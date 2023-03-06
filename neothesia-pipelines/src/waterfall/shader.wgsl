@@ -59,6 +59,7 @@ fn vs_main(vertex: Vertex, note: NoteInstance) -> VertexOutput {
     out.position = view_uniform.transform * transform * vec4<f32>(vertex.position, 0.0, 1.0);
     out.note_pos = pos + offset;
 
+
     out.src_position = vertex.position;
     out.size = size;
     out.color = note.color;
