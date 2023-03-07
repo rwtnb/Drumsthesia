@@ -1,11 +1,11 @@
 use std::time::Duration;
 
 use crate::{
-    midi_event::MidiEvent,
     scene::{Scene, SceneType},
     target::Target,
 };
 
+use lib_midi::MidiEvent;
 use winit::event::WindowEvent;
 
 pub struct SceneManager {

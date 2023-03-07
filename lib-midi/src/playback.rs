@@ -6,7 +6,7 @@ use crate::{MidiEvent, MidiTrack};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ActiveNote {
-    pub key: u8,
+    pub key: midly::num::u7,
     pub channel: u8,
 }
 
@@ -67,13 +67,13 @@ impl PlaybackState {
             .inspect(|event| match event.message {
                 MidiMessage::NoteOn { key, .. } => {
                     self.active_notes.insert(ActiveNote {
-                        key: key.as_int(),
+                        key,
                         channel: event.channel,
                     });
                 }
                 MidiMessage::NoteOff { key, .. } => {
                     self.active_notes.remove(&ActiveNote {
-                        key: key.as_int(),
+                        key,
                         channel: event.channel,
                     });
                 }

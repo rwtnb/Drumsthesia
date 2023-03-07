@@ -52,7 +52,8 @@ env_logger = "0.10"
 rfd = { version = "0.10", optional = true }
 
 lib-midi = { path = "./lib-midi" }
-midir = "0.8"
+midir = "0.9.1"
+midly = "0.5.3"
 
 fps_ticker = "1.0"
 
@@ -71,7 +72,6 @@ oxisynth = { version = "0.0.3", optional = true }
 ron = "0.8"
 serde = { version = "1.0", features = ["serde_derive"] }
 
-midi = "0.1"
 num = "0.4"
 async-thread = "0.1"
 

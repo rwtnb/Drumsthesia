@@ -8,7 +8,7 @@ use iced_native::{
     column as col,
     image::Handle as ImageHandle,
     row,
-    widget::{self, button, checkbox, container, image, pick_list, text, vertical_space},
+    widget::{self, button, checkbox, container, image, pick_list, text, vertical_space, horizontal_space},
     Command, Length, Padding,
 };
 
@@ -39,8 +39,8 @@ pub enum Message {
 
     Play,
 
-    PlayAlongCheckbox(bool),
-    MuteDrumsCheckbox(bool),
+    WaitForNotesCheckbox(bool),
+    GuideNotesCheckbox(bool),
 
     GoToPage(Step),
     ExitApp,
@@ -55,8 +55,8 @@ struct Data {
     inputs: Vec<InputDescriptor>,
     selected_input: Option<InputDescriptor>,
 
-    play_along: bool,
-    mute_drums: bool,
+    wait_for_notes: bool,
+    guide_notes: bool,
     is_loading: bool,
 
     logo_handle: ImageHandle,
@@ -80,8 +80,8 @@ impl AppUi {
                 inputs: Vec::new(),
                 selected_input: None,
 
-                play_along: target.config.play_along,
-                mute_drums: target.config.mute_drums,
+                wait_for_notes: target.config.wait_for_notes,
+                guide_notes: target.config.guide_notes,
                 is_loading: false,
 
                 logo_handle: ImageHandle::from_memory(include_bytes!("../img/banner.png").to_vec()),
@@ -111,7 +111,7 @@ impl Program for AppUi {
                             o => o,
                         };
 
-                        target.output_manager.borrow_mut().connect(out)
+                        target.output_manager.borrow_mut().connect(out);
                     }
 
                     if let Some(port) = self.data.selected_input.clone() {
@@ -152,13 +152,13 @@ impl Program for AppUi {
                 target.config.set_input(Some(&input));
                 self.data.selected_input = Some(input);
             }
-            Message::PlayAlongCheckbox(v) => {
-                target.config.play_along = v;
-                self.data.play_along = v;
+            Message::WaitForNotesCheckbox(v) => {
+                target.config.wait_for_notes = v;
+                self.data.wait_for_notes = v;
             }
-            Message::MuteDrumsCheckbox(v) => {
-                target.config.mute_drums = v;
-                self.data.mute_drums = v;
+            Message::GuideNotesCheckbox(v) => {
+                target.config.guide_notes = v;
+                self.data.guide_notes = v;
             }
             Message::Tick => {
                 self.data.outputs = target.output_manager.borrow().outputs();
@@ -213,11 +213,11 @@ impl Program for AppUi {
                     _ => None,
                 },
                 KeyCode::A => match self.current {
-                    Step::Main => Some(Message::PlayAlongCheckbox(!self.data.play_along)),
+                    Step::Main => Some(Message::WaitForNotesCheckbox(!self.data.guide_notes)),
                     _ => None,
                 },
                 KeyCode::D => match self.current {
-                    Step::Main => Some(Message::MuteDrumsCheckbox(!self.data.mute_drums)),
+                    Step::Main => Some(Message::GuideNotesCheckbox(!self.data.guide_notes)),
                     _ => None,
                 },
                 KeyCode::Enter => match self.current {
@@ -317,10 +317,10 @@ impl<'a> Step {
         let mut content = top_padded(column);
 
         if data.midi_file.is_some() {
-            let mute_drums = checkbox("Mute Drums", data.mute_drums, Message::MuteDrumsCheckbox)
+            let mute_drums = checkbox("Guide Notes", data.guide_notes, Message::GuideNotesCheckbox)
                 .style(theme::checkbox());
 
-            let play_along = checkbox("Play Along", data.play_along, Message::PlayAlongCheckbox)
+            let play_along = checkbox("Wait For Notes", data.wait_for_notes, Message::WaitForNotesCheckbox)
                 .style(theme::checkbox());
 
             let play = neo_button("Play")
@@ -403,7 +403,10 @@ impl<'a> Step {
 
         let column = col![
             image(data.logo_handle.clone()),
-            col![output_list, input_list].spacing(10),
+            col![
+                output_list, 
+                input_list, 
+            ].spacing(10),
             buttons
         ]
         .spacing(40)

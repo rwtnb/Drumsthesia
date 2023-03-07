@@ -1,5 +1,6 @@
 #![allow(clippy::collapsible_match, clippy::single_match)]
 
+use lib_midi::MidiEvent;
 pub use wgpu_jumpstart::{Gpu, TransformUniform, Uniform};
 
 pub mod ui;
@@ -16,9 +17,6 @@ pub mod input_manager;
 pub mod config;
 
 pub mod target;
-
-pub mod midi_event;
-use midi_event::MidiEvent;
 
 use futures::Future;
 

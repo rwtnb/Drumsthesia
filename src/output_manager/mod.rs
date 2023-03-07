@@ -1,10 +1,12 @@
 mod midi_backend;
+use lib_midi::midly;
 use midi_backend::{MidiBackend, MidiPortInfo};
 
 #[cfg(feature = "synth")]
 mod synth_backend;
 
 use midir::MidiInputPort;
+use midly::MidiMessage;
 #[cfg(feature = "synth")]
 use synth_backend::SynthBackend;
 
@@ -44,7 +46,7 @@ impl fmt::Debug for InputDescriptior {
 }
 
 pub trait OutputConnection {
-    fn midi_event(&mut self, _msg: midi::Message) {}
+    fn midi_event(&mut self, channel: u8, msg: MidiMessage) {}
 }
 
 struct DummyOutput {}
@@ -148,7 +150,7 @@ impl OutputManager {
         }
     }
 
-    pub fn midi_event(&mut self, msg: midi::Message) {
-        self.output_connection.1.midi_event(msg);
+    pub fn midi_event(&mut self, channel: u8, msg: MidiMessage) {
+        self.output_connection.1.midi_event(channel, msg);
     }
 }

@@ -1,18 +1,10 @@
-use std::{error::Error, path::Path, sync::mpsc::Receiver};
+use std::{error::Error, path::Path, sync::mpsc::Receiver, time::Duration};
 
 use crate::output_manager::{OutputConnection, OutputDescriptor};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use iced_native::program;
-
-#[cfg(all(feature = "fluid-synth", not(feature = "oxi-synth")))]
-const SAMPLES_SIZE: usize = 1410;
-
-enum MidiEvent {
-    NoteOn { ch: u8, key: u8, vel: u8 },
-    NoteOff { ch: u8, key: u8 },
-    ProgramChange { ch: u8, program: u8 },
-}
+use lib_midi::MidiEvent;
+use midly::MidiMessage;
 
 pub struct SynthBackend {
     _host: cpal::Host,
@@ -55,41 +47,44 @@ impl SynthBackend {
             })
             .unwrap();
 
-            let font_id = {
-                let mut file = std::fs::File::open(path).unwrap();
-                let font = oxisynth::SoundFont::load(&mut file).unwrap();
-                synth.add_font(font, true)
-            };
-
+            let mut file = std::fs::File::open(path).unwrap();
+            let font = oxisynth::SoundFont::load(&mut file).unwrap();
+            synth.add_font(font, true);
             synth.program_reset();
 
             move || {
                 let (l, r) = synth.read_next();
 
-                if let Ok(e) = rx.try_recv() {
-                    match e {
-                        MidiEvent::ProgramChange { ch, program } => {
-                            match synth.program_select(ch, font_id, 0, program) {
-                                Ok(()) => {},
-                                Err(err) => log::error!("{}", err)
-                            }
+                if let Ok(evt) = rx.try_recv() {
+                    let channel = evt.channel;
+                    match evt.message {
+                        MidiMessage::ProgramChange { program } => {
+                            synth
+                                .send_event(oxisynth::MidiEvent::ProgramChange {
+                                    channel,
+                                    program_id: program.as_int(),
+                                })
+                                .ok();
                         }
-                        MidiEvent::NoteOn { ch, key, vel } => {
+                        MidiMessage::NoteOn { key, vel } => {
                             synth
                                 .send_event(oxisynth::MidiEvent::NoteOn {
-                                    channel: ch as _,
-                                    key: key as _,
-                                    vel: vel as _,
+                                    channel,
+                                    key: key.as_int(),
+                                    vel: vel.as_int(),
                                 })
                                 .ok();
                         }
-                        MidiEvent::NoteOff { ch, key } => {
+                        MidiMessage::NoteOff { key, vel: _ } => {
                             synth
                                 .send_event(oxisynth::MidiEvent::NoteOff {
-                                    channel: ch as _,
-                                    key: key as _,
+                                    channel,
+                                    key: key.as_int(),
                                 })
                                 .ok();
+                        }
+                        _ => {
+                            log::warn!("implement missing midi messages {:?}", evt.message)
                         }
                     }
                 }
@@ -150,29 +145,14 @@ pub struct SynthOutputConnection {
 }
 
 impl OutputConnection for SynthOutputConnection {
-    fn midi_event(&mut self, msg: midi::Message) {
-        match msg {
-            midi::ProgramChange(ch, program) => {
-                self.tx
-                    .send(MidiEvent::ProgramChange {
-                        ch: ch as u8,
-                        program,
-                    })
-                    .ok();
-            }
-            midi::NoteOn(ch, key, vel) => {
-                self.tx
-                    .send(MidiEvent::NoteOn {
-                        ch: ch as u8,
-                        key,
-                        vel,
-                    })
-                    .ok();
-            }
-            midi::NoteOff(ch, key, _vel) => {
-                self.tx.send(MidiEvent::NoteOff { ch: ch as u8, key }).ok();
-            }
-            _ => {}
-        }
+    fn midi_event(&mut self, channel: u8, message: MidiMessage) {
+        let event = MidiEvent {
+            channel,
+            message,
+            delta: 0,
+            timestamp: Duration::ZERO,
+            track_id: 0
+        };
+        self.tx.send(event).ok();
     }
 }

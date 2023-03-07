@@ -1,6 +1,7 @@
+use lib_midi::MidiEvent;
+use midly::MidiMessage;
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
 use std::{
-    borrow::{Borrow, BorrowMut},
     time::Duration,
 };
 use wgpu_jumpstart::Color;
@@ -15,7 +16,7 @@ use self::{
 };
 
 use super::{Scene, SceneType};
-use crate::{midi_event::MidiEvent, target::Target, NeothesiaEvent};
+use crate::{target::Target, NeothesiaEvent};
 
 mod drum_roll;
 mod marks;
@@ -123,8 +124,8 @@ impl Scene for PlayingScene {
     }
 
     fn update(&mut self, target: &mut Target, delta: Duration) {
-        let play_along = self.player.play_along();
-        if play_along.are_required_keys_pressed() || !target.config.play_along {
+        let wait_for_notes = self.player.wait_for_notes();
+        if wait_for_notes.are_required_keys_pressed() || !target.config.wait_for_notes {
             if self.player.update(target, delta).is_none() {
                 self.drum_roll.reset_notes();
             }
@@ -216,15 +217,15 @@ impl Scene for PlayingScene {
     }
 
     fn midi_event(&mut self, target: &mut Target, event: &MidiEvent) {
-        match event {
-            MidiEvent::NoteOn { key, .. } => {
-                self.player.play_along().press_key(
+        match event.message {
+            MidiMessage::NoteOn { key, .. } => {
+                self.player.wait_for_notes().press_key(
                     midi_player::KeyPressSource::User,
-                    *key,
+                    key.as_int(),
                     true,
                 );
 
-                if let Some(mapping) = get_midi_mapping_for_note(*key) {
+                if let Some(mapping) = get_midi_mapping_for_note(key.as_int()) {
                     self.played_notes.push((
                         self.player.time_without_lead_in() + target.config.playback_offset,
                         mapping,
@@ -232,14 +233,13 @@ impl Scene for PlayingScene {
                     self.marks.resize(target, self.drum_roll.lanes(), &self.played_notes);
                 }
             }
-            MidiEvent::NoteOff { key, .. } => self.player.play_along().press_key(
+            MidiMessage::NoteOff { key, .. } => self.player.wait_for_notes().press_key(
                 midi_player::KeyPressSource::User,
-                *key,
+                key.as_int(),
                 false,
             ),
+            _ => {}
         }
-
-        self.drum_roll.user_midi_event(event);
     }
 }
 

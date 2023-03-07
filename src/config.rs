@@ -31,13 +31,17 @@ pub struct Config {
     #[serde(default = "default_playback_offset")]
     pub playback_offset: f32,
 
-    #[serde(default = "default_play_along")]
+    #[serde(default = "default_wait_for_notes")]
     #[serde(skip_serializing)]
-    pub play_along: bool,
+    pub wait_for_notes: bool,
 
-    #[serde(default = "default_mute_drums")]
+    #[serde(default = "default_guide_notes")]
     #[serde(skip_serializing)]
-    pub mute_drums: bool,
+    pub guide_notes: bool,
+
+    #[serde(default = "default_use_midi_instruments")]
+    #[serde(skip_serializing)]
+    pub use_midi_instruments: bool,
 
     #[serde(default = "default_color_schema")]
     pub color_schema: ColorSchema,
@@ -79,8 +83,9 @@ impl Config {
         config.unwrap_or_else(|| Self {
             speed_multiplier: default_speed_multiplier(),
             playback_offset: default_playback_offset(),
-            play_along: default_play_along(),
-            mute_drums: default_mute_drums(),
+            wait_for_notes: default_wait_for_notes(),
+            guide_notes: default_guide_notes(),
+            use_midi_instruments: default_use_midi_instruments(),
             color_schema: default_color_schema(),
             background_color: Default::default(),
             output: default_output(),
@@ -121,12 +126,16 @@ fn default_playback_offset() -> f32 {
     0.0
 }
 
-fn default_play_along() -> bool {
+fn default_wait_for_notes() -> bool {
     false
 }
 
-fn default_mute_drums() -> bool {
+fn default_guide_notes() -> bool {
     true
+}
+
+fn default_use_midi_instruments() -> bool {
+    false
 }
 
 pub const fn default_color_schema() -> ColorSchema {

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     utils::{Point, Size},
     TransformUniform, Uniform,
@@ -79,23 +77,6 @@ impl DrumRoll {
         self.pos.y = 5.0;
 
         self.calculate_positions();
-    }
-
-    pub fn user_midi_event(&mut self, event: &crate::MidiEvent) {
-        match event {
-            crate::MidiEvent::NoteOn { key, .. } => {
-                if let Some(lane) = self.lanes.iter_mut().find(|i| i.mapping.id == *key) {
-                    lane.set_pressed_by_user(true);
-                    self.queue_reupload();
-                }
-            }
-            crate::MidiEvent::NoteOff { key, .. } => {
-                if let Some(lane) = self.lanes.iter_mut().find(|i| i.mapping.id == *key) {
-                    lane.set_pressed_by_user(false);
-                    self.queue_reupload();
-                }
-            }
-        }
     }
 
     pub fn reset_notes(&mut self) {

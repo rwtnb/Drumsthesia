@@ -2,10 +2,9 @@ use std::collections::HashSet;
 
 use crate::output_manager::{OutputConnection, OutputDescriptor};
 
-use iced_native::program;
+
 use lib_midi::ActiveNote;
-use midi::ToRawMessages;
-use num::FromPrimitive;
+use midly::{MidiMessage, live::LiveEvent, num::u7};
 
 pub struct MidiOutputConnection {
     conn: midi_io::MidiOutputConnection,
@@ -47,38 +46,38 @@ impl MidiBackend {
 }
 
 impl OutputConnection for MidiOutputConnection {
-    fn midi_event(&mut self, msg: midi::Message) {
-        match &msg {
-            midi::Message::ProgramChange(ch, program) => {
-                use midi::utils::{mask7, status_byte};
-
-                let channel = channel_to_u8(ch);
-                let sb = status_byte(
-                    midi::constants::PROGRAM_CHANGE,
-                    midi::Channel::from_u8(channel).unwrap(),
-                );
-
-                let data = [sb, mask7(*program)];
+    fn midi_event(&mut self, channel: u8, message: MidiMessage) {
+        match &message {
+            MidiMessage::ProgramChange { program: _ } => {
+                let event = LiveEvent::Midi {
+                    channel: channel.into(),
+                    message
+                };
+                let mut data = Vec::new();
+                event.write(&mut data).unwrap();
                 self.conn.send(&data).ok();
             },
-            midi::Message::NoteOff(ch, key, _) => {
-                let channel = channel_to_u8(ch);
+            MidiMessage::NoteOn { key, vel: _ } => {
+                let event = LiveEvent::Midi {
+                    channel: channel.into(),
+                    message
+                };
+                let mut data = Vec::new();
+                event.write(&mut data).unwrap();
+                self.conn.send(&data).ok();
+                self.active_notes.insert(ActiveNote { key: *key, channel });
+            },
+            MidiMessage::NoteOff { key, vel: _ } => {
+                let event = LiveEvent::Midi {
+                    channel: channel.into(),
+                    message
+                };
+                let mut data = Vec::new();
+                event.write(&mut data).unwrap();
+                self.conn.send(&data).ok();
                 self.active_notes.remove(&ActiveNote { key: *key, channel });
             }
-            midi::Message::NoteOn(ch, key, _) => {
-                let channel = channel_to_u8(ch);
-                self.active_notes.insert(ActiveNote { key: *key, channel });
-            }
             _ => {}
-        }
-
-        if let Some(msg) = msg.to_raw_messages().first() {
-            match *msg {
-                midi::RawMessage::StatusDataData(a, b, c) => {
-                    self.conn.send(&[a, b, c]).ok();
-                }
-                _ => {}
-            }
         }
     }
 }
@@ -86,14 +85,14 @@ impl OutputConnection for MidiOutputConnection {
 impl Drop for MidiOutputConnection {
     fn drop(&mut self) {
         for note in self.active_notes.iter() {
-            use midi::utils::{mask7, status_byte};
-
-            let sb = status_byte(
-                midi::constants::NOTE_OFF,
-                midi::Channel::from_u8(note.channel).unwrap(),
-            );
-            let data = [sb, mask7(note.key), mask7(0)];
-            self.conn.send(&data).ok();
+                let key = u7::try_from(note.key.into()).unwrap();
+                let event = LiveEvent::Midi {
+                    channel: note.channel.into(),
+                    message: MidiMessage::NoteOff { key, vel: u7::new(0) }
+                };
+                let mut data = Vec::new();
+                event.write(&mut data).unwrap();
+                self.conn.send(&data).ok();
         }
     }
 }
@@ -113,26 +112,5 @@ impl PartialEq for MidiPortInfo {
 impl std::fmt::Display for MidiPortInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.port)
-    }
-}
-
-fn channel_to_u8(ch: &midi::Channel) -> u8 {
-    match ch {
-        midi::Channel::Ch1 => 0,
-        midi::Channel::Ch2 => 1,
-        midi::Channel::Ch3 => 2,
-        midi::Channel::Ch4 => 3,
-        midi::Channel::Ch5 => 4,
-        midi::Channel::Ch6 => 5,
-        midi::Channel::Ch7 => 6,
-        midi::Channel::Ch8 => 7,
-        midi::Channel::Ch9 => 8,
-        midi::Channel::Ch10 => 9,
-        midi::Channel::Ch11 => 10,
-        midi::Channel::Ch12 => 11,
-        midi::Channel::Ch13 => 12,
-        midi::Channel::Ch14 => 13,
-        midi::Channel::Ch15 => 14,
-        midi::Channel::Ch16 => 15,
     }
 }

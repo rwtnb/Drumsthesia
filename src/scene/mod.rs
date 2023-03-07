@@ -6,8 +6,9 @@ pub mod playing_scene;
 #[cfg(feature = "app")]
 pub mod scene_manager;
 
-use crate::{midi_event::MidiEvent, target::Target};
+use crate::{target::Target};
 use std::time::Duration;
+use lib_midi::MidiEvent;
 use winit::event::WindowEvent;
 
 pub trait Scene {

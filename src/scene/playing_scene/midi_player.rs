@@ -1,7 +1,6 @@
 use crate::{target::Target, OutputManager};
-use num::FromPrimitive;
+use midly::MidiMessage;
 use std::{
-    borrow::Borrow,
     cell::RefCell,
     collections::{HashMap, HashSet},
     rc::Rc,
@@ -11,8 +10,6 @@ use winit::{
     dpi::PhysicalPosition,
     event::{ElementState, KeyboardInput, MouseButton},
 };
-
-use crate::midi_event::MidiEvent;
 
 mod rewind_controler;
 use rewind_controler::RewindController;
@@ -24,8 +21,8 @@ pub struct MidiPlayer {
     rewind_controller: RewindController,
     output_manager: Rc<RefCell<OutputManager>>,
     midi_file: Rc<lib_midi::Midi>,
-    play_along: PlayAlong,
-    mute_drums: bool,
+    wait_for_notes: WaitForNotes,
+    guide_notes: bool,
 }
 
 impl MidiPlayer {
@@ -37,8 +34,8 @@ impl MidiPlayer {
             rewind_controller: RewindController::None,
             output_manager: target.output_manager.clone(),
             midi_file: midi_file.clone(),
-            play_along: PlayAlong::default(),
-            mute_drums: target.config.mute_drums,
+            wait_for_notes: WaitForNotes::default(),
+            guide_notes: target.config.guide_notes,
         };
         player.update(target, Duration::ZERO);
 
@@ -60,52 +57,52 @@ impl MidiPlayer {
         let events = self.playback.update(&self.midi_file.merged_track, elapsed);
 
         events.iter().for_each(|event| {
-            use lib_midi::midly::MidiMessage;
+            let is_drum_channel = event.channel == midly::num::u7::new(9);
             let channel = event.channel;
 
             match event.message {
                 MidiMessage::ProgramChange { program } => {
-                    let event = midi::Message::ProgramChange(
-                        midi::Channel::from_u8(channel).unwrap(),
-                        program.as_int(),
-                    );
-                    self.output_manager.borrow_mut().midi_event(event);
+                    self.output_manager
+                        .borrow_mut()
+                        .midi_event(channel, event.message);
+                }
+                MidiMessage::PitchBend { bend } => {
+                    self.output_manager
+                        .borrow_mut()
+                        .midi_event(channel, event.message);
+                }
+                MidiMessage::Controller { controller, value } => {
+                    self.output_manager
+                        .borrow_mut()
+                        .midi_event(channel, event.message);
                 }
                 MidiMessage::NoteOn { key, vel } => {
-                    let event = midi::Message::NoteOn(
-                        midi::Channel::from_u8(event.channel).unwrap(),
-                        key.as_int(),
-                        vel.as_int(),
-                    );
-
-                    if channel == 9 {
-                        self.play_along
+                    if is_drum_channel {
+                        self.wait_for_notes
                             .press_key(KeyPressSource::File, key.as_int(), true);
                     }
 
-                    if self.mute_drums && channel == 9 {
+                    if !self.guide_notes && is_drum_channel {
                         return;
                     }
 
-                    self.output_manager.borrow_mut().midi_event(event);
+                    self.output_manager
+                        .borrow_mut()
+                        .midi_event(channel, event.message);
                 }
                 MidiMessage::NoteOff { key, .. } => {
-                    let event = midi::Message::NoteOff(
-                        midi::Channel::from_u8(event.channel).unwrap(),
-                        key.as_int(),
-                        0,
-                    );
-
-                    if channel == 9 {
-                        self.play_along
+                    if is_drum_channel {
+                        self.wait_for_notes
                             .press_key(KeyPressSource::File, key.as_int(), false);
                     }
 
-                    if self.mute_drums && channel == 9 {
+                    if !self.guide_notes && is_drum_channel {
                         return;
                     }
 
-                    self.output_manager.borrow_mut().midi_event(event);
+                    self.output_manager
+                        .borrow_mut()
+                        .midi_event(channel, event.message);
                 }
                 _ => {}
             }
@@ -122,11 +119,11 @@ impl MidiPlayer {
         let mut output = self.output_manager.borrow_mut();
         for note in self.playback.active_notes().iter() {
             output.midi_event(
-                MidiEvent::NoteOff {
-                    channel: note.channel,
+                note.channel,
+                MidiMessage::NoteOff {
                     key: note.key,
-                }
-                .into(),
+                    vel: midly::num::u7::new(0),
+                },
             )
         }
     }
@@ -219,8 +216,8 @@ impl MidiPlayer {
 }
 
 impl MidiPlayer {
-    pub fn play_along(&mut self) -> &mut PlayAlong {
-        &mut self.play_along
+    pub fn wait_for_notes(&mut self) -> &mut WaitForNotes {
+        &mut self.wait_for_notes
     }
 }
 
@@ -230,12 +227,12 @@ pub enum KeyPressSource {
 }
 
 #[derive(Default)]
-pub struct PlayAlong {
+pub struct WaitForNotes {
     required_notes: HashSet<u8>,
     played_notes: HashSet<u8>,
 }
 
-impl PlayAlong {
+impl WaitForNotes {
     fn user_press_key(&mut self, note: u8, active: bool) {
         if let Some(mapping) = get_midi_mapping_for_note(note) {
             if active {

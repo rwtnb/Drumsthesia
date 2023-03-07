@@ -29,17 +29,16 @@ impl Notes {
         let mut instances = Vec::new();
 
         for note in midi.merged_track.notes.iter() {
-
             if note.channel != 9 {
                 continue;
             }
 
             match lanes.iter().find(|i| i.mapping.accept_note(note.note)) {
-                None =>  {
+                None => {
                     println!("missing mapping for note {}", note.note);
-                },
+                }
 
-                Some(lane) =>   {
+                Some(lane) => {
                     let color: Color = lane.mapping.color.into();
                     let x = note.start.as_secs_f32();
                     let h = lane.height() * 0.5;
@@ -55,7 +54,7 @@ impl Notes {
                         size: [w, h],
                         color: color.into_linear_rgb(),
                         radius: h * 0.1,
-                        spacing: (window_height / 720.0) * 2.0
+                        spacing: (window_height / 720.0) * 2.0,
                     });
                 }
             }

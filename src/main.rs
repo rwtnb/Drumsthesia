@@ -1,13 +1,13 @@
 #![cfg(feature = "app")]
 
 use drumsthesia::{
-    midi_event::MidiEvent,
     scene::{menu_scene, playing_scene, scene_manager, SceneType},
     target::Target,
     utils::window::WindowState,
     Gpu, NeothesiaEvent,
 };
 
+use lib_midi::MidiEvent;
 use wgpu_jumpstart::Surface;
 use winit::{
     event::WindowEvent,

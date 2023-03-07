@@ -1,4 +1,9 @@
-use crate::{midi_event::MidiEvent, EventLoopProxy, NeothesiaEvent};
+use std::time::Duration;
+
+use lib_midi::MidiEvent;
+use midly::{live::LiveEvent, MidiMessage};
+
+use crate::{EventLoopProxy, NeothesiaEvent};
 
 pub struct InputManager {
     input: midi_io::MidiInputManager,
@@ -23,37 +28,32 @@ impl InputManager {
     pub fn connect_input(&mut self, port: midi_io::MidiInputPort) {
         let tx = self.tx.clone();
         self.current_connection = midi_io::MidiInputManager::connect_input(port, move |message| {
-            if message.len() == 3 {
-                if message[0] >= 0x90 && message[0] <= 0x9F {
-                    let (s, ch) = midi::utils::from_status_byte(message[0]);
-                    assert_eq!(s, 9);
-
-                    let key = message[1];
-                    let vel = message[2];
-
-                    // Some keyboards send NoteOn event with vel 0 instead of NoteOff
-                    if vel == 0 {
-                        tx.send_event(NeothesiaEvent::MidiInput(MidiEvent::NoteOff {
-                            channel: ch as u8,
-                            key,
-                        }));
-                    } else {
-                        tx.send_event(NeothesiaEvent::MidiInput(MidiEvent::NoteOn {
-                            channel: ch as u8,
+            let event = LiveEvent::parse(message).unwrap();
+            match &event {
+                LiveEvent::Midi { channel, message } => match message {
+                    MidiMessage::NoteOn { key: _, vel: _ } => {
+                        let event = MidiEvent {
+                            channel: channel.as_int(),
+                            message: *message,
+                            delta: 0,
+                            timestamp: Duration::ZERO,
                             track_id: 0,
-                            key,
-                            vel,
-                        }));
+                        };
+                        tx.proxy.send_event(NeothesiaEvent::MidiInput(event)).unwrap();
                     }
-                } else if message[0] >= 0x80 && message[0] <= 0x8F {
-                    let (s, ch) = midi::utils::from_status_byte(message[0]);
-                    assert_eq!(s, 8);
-
-                    tx.send_event(NeothesiaEvent::MidiInput(MidiEvent::NoteOff {
-                        channel: ch as u8,
-                        key: message[1],
-                    }));
-                }
+                    MidiMessage::NoteOff { key: _, vel: _ } => {
+                        let event = MidiEvent {
+                            channel: channel.as_int(),
+                            message: *message,
+                            delta: 0,
+                            timestamp: Duration::ZERO,
+                            track_id: 0,
+                        };
+                        tx.proxy.send_event(NeothesiaEvent::MidiInput(event)).unwrap();
+                    }
+                    _ => {}
+                },
+                _ => {}
             }
         });
     }
