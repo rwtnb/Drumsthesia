@@ -30,10 +30,10 @@ impl InputManager {
         self.current_connection = midi_io::MidiInputManager::connect_input(port, move |message| {
             let event = LiveEvent::parse(message).unwrap();
             match &event {
-                LiveEvent::Midi { channel, message } => match message {
+                LiveEvent::Midi { channel: _, message } => match message {
                     MidiMessage::NoteOn { key: _, vel: _ } => {
                         let event = MidiEvent {
-                            channel: channel.as_int(),
+                            channel: 9,
                             message: *message,
                             delta: 0,
                             timestamp: Duration::ZERO,
@@ -43,7 +43,7 @@ impl InputManager {
                     }
                     MidiMessage::NoteOff { key: _, vel: _ } => {
                         let event = MidiEvent {
-                            channel: channel.as_int(),
+                            channel: 9,
                             message: *message,
                             delta: 0,
                             timestamp: Duration::ZERO,

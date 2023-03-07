@@ -1,9 +1,7 @@
 use lib_midi::MidiEvent;
 use midly::MidiMessage;
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
-use std::{
-    time::Duration,
-};
+use std::time::Duration;
 use wgpu_jumpstart::Color;
 use winit::{
     dpi::LogicalSize,
@@ -181,7 +179,6 @@ impl Scene for PlayingScene {
 
         self.marks
             .render(&target.transform_uniform, &mut render_pass);
-
     }
 
     fn window_event(&mut self, target: &mut Target, event: &WindowEvent) {
@@ -226,18 +223,29 @@ impl Scene for PlayingScene {
                 );
 
                 if let Some(mapping) = get_midi_mapping_for_note(key.as_int()) {
+                    self.player
+                        .output_manager
+                        .borrow_mut()
+                        .midi_event(event.channel, event.message);
                     self.played_notes.push((
                         self.player.time_without_lead_in() + target.config.playback_offset,
                         mapping,
                     ));
-                    self.marks.resize(target, self.drum_roll.lanes(), &self.played_notes);
+                    self.marks
+                        .resize(target, self.drum_roll.lanes(), &self.played_notes);
                 }
             }
-            MidiMessage::NoteOff { key, .. } => self.player.wait_for_notes().press_key(
-                midi_player::KeyPressSource::User,
-                key.as_int(),
-                false,
-            ),
+            MidiMessage::NoteOff { key, .. } => {
+                self.player
+                    .output_manager
+                    .borrow_mut()
+                    .midi_event(event.channel, event.message);
+                self.player.wait_for_notes().press_key(
+                    midi_player::KeyPressSource::User,
+                    key.as_int(),
+                    false,
+                );
+            }
             _ => {}
         }
     }

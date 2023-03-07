@@ -14,12 +14,12 @@ use winit::{
 mod rewind_controler;
 use rewind_controler::RewindController;
 
-use super::midi_mapping::{get_midi_mapping, get_midi_mapping_for_note, MidiMapping};
+use super::midi_mapping::get_midi_mapping_for_note;
 
 pub struct MidiPlayer {
     playback: lib_midi::PlaybackState,
     rewind_controller: RewindController,
-    output_manager: Rc<RefCell<OutputManager>>,
+    pub output_manager: Rc<RefCell<OutputManager>>,
     midi_file: Rc<lib_midi::Midi>,
     wait_for_notes: WaitForNotes,
     guide_notes: bool,
@@ -61,22 +61,22 @@ impl MidiPlayer {
             let channel = event.channel;
 
             match event.message {
-                MidiMessage::ProgramChange { program } => {
+                MidiMessage::ProgramChange { program: _ } => {
                     self.output_manager
                         .borrow_mut()
                         .midi_event(channel, event.message);
                 }
-                MidiMessage::PitchBend { bend } => {
+                MidiMessage::PitchBend { bend: _ } => {
                     self.output_manager
                         .borrow_mut()
                         .midi_event(channel, event.message);
                 }
-                MidiMessage::Controller { controller, value } => {
+                MidiMessage::Controller { controller: _, value: _ } => {
                     self.output_manager
                         .borrow_mut()
                         .midi_event(channel, event.message);
                 }
-                MidiMessage::NoteOn { key, vel } => {
+                MidiMessage::NoteOn { key, vel: _ } => {
                     if is_drum_channel {
                         self.wait_for_notes
                             .press_key(KeyPressSource::File, key.as_int(), true);
