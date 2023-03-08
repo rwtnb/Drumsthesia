@@ -27,11 +27,6 @@ pub struct EventLoopProxy {
 }
 
 impl EventLoopProxy {
-    #[cfg(feature = "record")]
-    pub fn new_mock() -> Self {
-        Self {}
-    }
-
     #[cfg(feature = "app")]
     pub fn new_winit(proxy: winit::event_loop::EventLoopProxy<NeothesiaEvent>) -> Self {
         Self { proxy }
@@ -41,15 +36,13 @@ impl EventLoopProxy {
     pub fn send_event(&self, event: NeothesiaEvent) {
         #[cfg(feature = "app")]
         self.proxy.send_event(event).unwrap();
-        #[cfg(feature = "record")]
-        let _ = event;
     }
 }
 
 #[derive(Debug)]
 pub enum NeothesiaEvent {
     #[cfg(feature = "app")]
-    MainMenu(crate::scene::menu_scene::Event),
+    MainMenu,
     MidiInput(MidiEvent),
     GoBack,
 }

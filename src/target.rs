@@ -9,15 +9,11 @@ use crate::{EventLoopProxy, OutputManager, TransformUniform};
 use wgpu_jumpstart::{Gpu, Uniform};
 
 #[cfg(feature = "app")]
-use crate::ui::IcedManager;
-#[cfg(feature = "app")]
 use winit::window::Window;
 
 pub struct Target {
     #[cfg(feature = "app")]
     pub window: Window,
-    #[cfg(feature = "app")]
-    pub iced_manager: IcedManager,
 
     pub window_state: WindowState,
     pub gpu: Gpu,
@@ -49,16 +45,6 @@ impl Target {
 
         let text_renderer = TextRenderer::new(&gpu);
 
-        #[cfg(feature = "app")]
-        let iced_manager = IcedManager::new(
-            &gpu.device,
-            (
-                window_state.physical_size.width,
-                window_state.physical_size.height,
-            ),
-            window_state.scale_factor,
-        );
-
         let args: Vec<String> = std::env::args().collect();
 
         let midi_file = if args.len() > 1 {
@@ -74,8 +60,6 @@ impl Target {
         Self {
             #[cfg(feature = "app")]
             window,
-            #[cfg(feature = "app")]
-            iced_manager,
 
             window_state,
             gpu,
@@ -98,14 +82,5 @@ impl Target {
             self.window_state.scale_factor as f32,
         );
         self.transform_uniform.update(&self.gpu.queue);
-
-        #[cfg(feature = "app")]
-        self.iced_manager.resize(
-            (
-                self.window_state.physical_size.width,
-                self.window_state.physical_size.height,
-            ),
-            self.window_state.scale_factor,
-        );
     }
 }

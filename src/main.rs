@@ -1,7 +1,7 @@
 #![cfg(feature = "app")]
 
 use drumsthesia::{
-    scene::{menu_scene, playing_scene, scene_manager, SceneType},
+    scene::{playing_scene, scene_manager, SceneType},
     target::Target,
     utils::window::WindowState,
     Gpu, NeothesiaEvent,
@@ -11,7 +11,7 @@ use lib_midi::MidiEvent;
 use wgpu_jumpstart::Surface;
 use winit::{
     event::WindowEvent,
-    event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
+    event_loop::{ControlFlow, EventLoop, EventLoopBuilder}, window::Window,
 };
 
 pub struct Drumsthesia {
@@ -25,8 +25,8 @@ pub struct Drumsthesia {
 
 impl Drumsthesia {
     pub fn new(mut target: Target, surface: Surface) -> Self {
-        let game_scene = menu_scene::MenuScene::new(&mut target);
-        let mut game_scene = scene_manager::SceneManager::new(game_scene);
+        let to = playing_scene::PlayingScene::new(&mut target);
+        let mut game_scene = scene_manager::SceneManager::new(to);
 
         target.resize();
         game_scene.resize(&mut target);
@@ -97,19 +97,13 @@ impl Drumsthesia {
 
     pub fn neothesia_event(&mut self, event: &NeothesiaEvent, control_flow: &mut ControlFlow) {
         match event {
-            NeothesiaEvent::MainMenu(event) => match event {
-                menu_scene::Event::Play => {
-                    let to = playing_scene::PlayingScene::new(&mut self.target);
-                    self.game_scene.transition_to(&mut self.target, to);
-                }
+            NeothesiaEvent::MainMenu =>{
             },
             NeothesiaEvent::GoBack => match self.game_scene.scene_type() {
                 SceneType::MainMenu => {
                     *control_flow = ControlFlow::Exit;
                 }
                 SceneType::Playing => {
-                    let to = menu_scene::MenuScene::new(&mut self.target);
-                    self.game_scene.transition_to(&mut self.target, to);
                 }
             },
             NeothesiaEvent::MidiInput(event) => self.midi_event(event),
@@ -123,9 +117,6 @@ impl Drumsthesia {
         self.last_time = std::time::Instant::now();
 
         self.game_scene.update(&mut self.target, delta);
-
-        #[cfg(debug_assertions)]
-        self.target.text_renderer.queue_fps(self.fps_timer.avg());
     }
 
     pub fn render(&mut self) {
@@ -147,33 +138,12 @@ impl Drumsthesia {
 
         self.game_scene.render(&mut self.target, view);
 
-        self.target.text_renderer.render(
-            (
-                self.target.window_state.logical_size.width,
-                self.target.window_state.logical_size.height,
-            ),
-            &mut self.target.gpu,
-            view,
-        );
-
         self.target.gpu.submit();
         frame.present();
     }
 }
 
-fn main() {
-    let builder = winit::window::WindowBuilder::new().with_inner_size(winit::dpi::LogicalSize {
-        width: 1080.0,
-        height: 720.0,
-    });
-
-    let (event_loop, target, surface) = init(builder);
-
-    let mut app = Drumsthesia::new(target, surface);
-
-    // Investigate:
-    // https://github.com/gfx-rs/wgpu-rs/pull/306
-
+async fn run(event_loop: EventLoop<NeothesiaEvent>, window: Window, mut app: Drumsthesia) {
     event_loop.run(move |event, _, control_flow| {
         use winit::event::Event;
         match &event {
@@ -195,6 +165,31 @@ fn main() {
             _ => {}
         }
     });
+}
+
+fn main() {
+    let builder = winit::window::WindowBuilder::new().with_inner_size(winit::dpi::LogicalSize {
+        width: 1080.0,
+        height: 720.0,
+    });
+
+    let (event_loop, target, surface) = init(builder);
+    let window = target.window;
+    let mut app = Drumsthesia::new(target, surface);
+
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+    console_log::init().expect("could not initialize logger");
+    use winit::platform::web::WindowExtWebSys;
+    // On wasm, append the canvas to the document body
+    web_sys::window()
+        .and_then(|win| win.document())
+        .and_then(|doc| doc.body())
+        .and_then(|body| {
+            body.append_child(&web_sys::Element::from(window.canvas()))
+                .ok()
+        })
+        .expect("couldn't append canvas to document body");
+    wasm_bindgen_futures::spawn_local(run(event_loop, target.window, app));
 }
 
 pub fn init(builder: winit::window::WindowBuilder) -> (EventLoop<NeothesiaEvent>, Target, Surface) {

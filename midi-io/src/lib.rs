@@ -89,20 +89,17 @@ impl MidiInputManager {
                 .unwrap_or(false)
         });
 
-        port.and_then(move |port| {
-            input
-                .connect(
-                    &port,
-                    "MidiIo-in-conn",
-                    move |_, data, _| {
-                        callback(data);
-                        //
-                    },
-                    (),
-                )
-                .ok()
-        })
-        .map(MidiInputConnection)
+        input
+            .connect(
+                &port.unwrap(),
+                "MidiIo-in-conn",
+                move |_, data, _| {
+                    callback(data);
+                },
+                (),
+            )
+            .ok()
+            .map(MidiInputConnection)
     }
 }
 
