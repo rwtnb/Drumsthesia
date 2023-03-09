@@ -24,24 +24,6 @@ impl TextRenderer {
         self.glyph_brush.queue(section);
     }
 
-    pub fn queue_fps(&mut self, fps: f64) {
-        let s = format!("FPS: {}", fps.round() as u32);
-        let text = vec![wgpu_glyph::Text::new(&s)
-            .with_color([1.0, 1.0, 1.0, 1.0])
-            .with_scale(20.0)];
-
-        self.queue_text(Section {
-            text,
-            screen_position: (0.0, 5.0),
-            layout: wgpu_glyph::Layout::Wrap {
-                line_breaker: Default::default(),
-                h_align: wgpu_glyph::HorizontalAlign::Left,
-                v_align: wgpu_glyph::VerticalAlign::Top,
-            },
-            ..Default::default()
-        });
-    }
-
     pub fn render(&mut self, logical_size: (f32, f32), gpu: &mut Gpu, view: &wgpu::TextureView) {
         let encoder = &mut gpu.encoder;
 

@@ -7,7 +7,7 @@ use {
     std::collections::HashMap,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct MidiEvent {
     pub channel: u8,
     pub delta: u32,

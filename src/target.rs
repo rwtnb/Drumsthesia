@@ -1,20 +1,14 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::config::Config;
+use crate::EventLoopProxy;
+use crate::{config::Config, output_manager::OutputManager};
 use crate::input_manager::InputManager;
 use crate::ui::TextRenderer;
 use crate::utils::window::WindowState;
-use crate::{EventLoopProxy, OutputManager, TransformUniform};
-use wgpu_jumpstart::{Gpu, Uniform};
-
-#[cfg(feature = "app")]
-use winit::window::Window;
+use wgpu_jumpstart::{Gpu, Uniform, TransformUniform};
 
 pub struct Target {
-    #[cfg(feature = "app")]
-    pub window: Window,
-
     pub window_state: WindowState,
     pub gpu: Gpu,
 
@@ -32,7 +26,7 @@ pub struct Target {
 
 impl Target {
     pub fn new(
-        #[cfg(feature = "app")] window: Window,
+        midi_file: Option<Rc<lib_midi::Midi>>,
         window_state: WindowState,
         proxy: EventLoopProxy,
         gpu: Gpu,
@@ -47,20 +41,7 @@ impl Target {
 
         let args: Vec<String> = std::env::args().collect();
 
-        let midi_file = if args.len() > 1 {
-            if let Ok(midi) = lib_midi::Midi::new(&args[1]) {
-                Some(Rc::new(midi))
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-
         Self {
-            #[cfg(feature = "app")]
-            window,
-
             window_state,
             gpu,
             transform_uniform,

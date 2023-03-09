@@ -2,11 +2,12 @@ mod instance_data;
 
 pub use instance_data::NoteInstance;
 
+use wasm_bindgen::prelude::wasm_bindgen;
 use wgpu_jumpstart::{
     wgpu, Gpu, Instances, RenderPipelineBuilder, Shape, TransformUniform, Uniform,
 };
 
-use bytemuck::{Pod, Zeroable};
+use bytemuck_derive::{Pod, Zeroable};
 
 pub struct WaterfallPipeline {
     render_pipeline: wgpu::RenderPipeline,
@@ -49,12 +50,10 @@ impl<'a> WaterfallPipeline {
                     push_constant_ranges: &[],
                 });
 
-        let ni_attrs = NoteInstance::attributes();
-
         let render_pipeline =
             RenderPipelineBuilder::new(render_pipeline_layout, "vs_main", &shader)
                 .fragment("fs_main", &shader)
-                .vertex_buffers(&[Shape::layout(), NoteInstance::layout(&ni_attrs)])
+                .vertex_buffers(&[Shape::layout(), NoteInstance::layout()])
                 .build(&gpu.device);
 
         let quad = Shape::new_quad(&gpu.device);
@@ -101,13 +100,10 @@ impl<'a> WaterfallPipeline {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(Default, Clone, Copy, Pod, Zeroable)]
 struct TimeUniform {
     time: f32,
-}
-
-impl Default for TimeUniform {
-    fn default() -> Self {
-        Self { time: 0.0 }
-    }
+    _p1: f32,
+    _p2: f32,
+    _p3: f32
 }

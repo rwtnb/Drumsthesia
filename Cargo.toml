@@ -3,18 +3,21 @@ name = "drumsthesia"
 version = "0.0.1"
 authors = ["Rodrigo Watanabe <rodrigo@wtnb.io>"]
 edition = "2021"
-default-run = "drumsthesia"
+
+[build]
+target_arch = "wasm32"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+lto = true
 
 [workspace]
-members = [
-    "lib-midi",
-    "wgpu-jumpstart",
-    "neothesia-pipelines",
-    "midi-io",
-]
+members = ["lib-midi", "wgpu-jumpstart", "neothesia-pipelines", "midi-io"]
 
 [features]
-default = ["app"]
+default = ["app", "wee_alloc"]
 
 app = ["rfd", "oxi-synth", "play_along"]
 
@@ -25,18 +28,28 @@ fluid-synth = ["synth", "cpal", "fluidlite"]
 oxi-synth = ["synth", "cpal", "oxisynth"]
 
 [dependencies]
-bytemuck = "1.5"
 futures = "0.3"
 
 wgpu-jumpstart = { path = "./wgpu-jumpstart" }
 neothesia-pipelines = { path = "./neothesia-pipelines" }
 midi-io = { path = "./midi-io" }
 
-winit = { version = "0.28.2" }
 
-wgpu = { version = "0.14"  }
-wgpu_glyph = "0.18"
+web-sys = { version = "0.3.61", features = [
+  "Window",
+  "Document",
+  "Request",
+  'RequestInit',
+  'RequestMode',
+  "Response",
+  "Blob",
+  "console"
+] }
 
+wgpu = { version = "0.15.1", features = ["webgl"] }
+wgpu_glyph = { branch = "wgpu-0.15", git = "https://github.com/rwtnb/wgpu_glyph.git" }
+
+winit = "0.28.2"
 
 log = "0.4"
 env_logger = "0.10"
@@ -47,10 +60,13 @@ lib-midi = { path = "./lib-midi" }
 midir = "0.9.1"
 midly = "0.5.3"
 
-fps_ticker = "1.0"
+cpal = { version = "0.14", optional = true, features = [ "wasm-bindgen" ] }
+wee_alloc = { version = "0.4.2", optional = true }
 
-cpal = { version = "0.14", optional = true }
-fluidlite = { version = "0.2", features = ["builtin", "bindgen"], optional = true }
+fluidlite = { version = "0.2", features = [
+  "builtin",
+  "bindgen",
+], optional = true }
 oxisynth = { version = "0.0.3", optional = true }
 
 ron = "0.8"
@@ -62,18 +78,6 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.34"
 console_log = "0.2.1"
 console_error_panic_hook = "0.1.7"
-
-[dependencies.web-sys]
-version = "0.3"
-features = [
-  "Window",
-  "Document",
-]
-
-[target.'cfg(target_os = "macos")'.dependencies]
-objc = "0.2"
-
-[[bin]]
-name = "drumsthesia"
-required-features = ["app"]
-
+bytemuck = "1.13.1"
+js-sys = "0.3.61"
+instant = { version = "0.1.12", features = [ "wasm-bindgen" ] }

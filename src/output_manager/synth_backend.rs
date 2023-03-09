@@ -6,6 +6,10 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use lib_midi::MidiEvent;
 use midly::MidiMessage;
 
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 pub struct SynthBackend {
     _host: cpal::Host,
     device: cpal::Device,
@@ -36,7 +40,7 @@ impl SynthBackend {
         })
     }
 
-    fn run<T: cpal::Sample>(&self, rx: Receiver<MidiEvent>, path: &Path) -> cpal::Stream {
+    fn run<T: cpal::Sample>(&self, rx: Receiver<MidiEvent>) -> cpal::Stream {
         let mut next_value = {
             let sample_rate = self.stream_config.sample_rate.0 as f32;
 
@@ -47,7 +51,8 @@ impl SynthBackend {
             })
             .unwrap();
 
-            let mut file = std::fs::File::open(path).unwrap();
+            use std::io::Cursor;
+            let mut file = Cursor::new(include_bytes!("../../default.sf2"));
             let font = oxisynth::SoundFont::load(&mut file).unwrap();
             synth.add_font(font, true);
             synth.program_reset();
@@ -83,9 +88,7 @@ impl SynthBackend {
                                 })
                                 .ok();
                         }
-                        _ => {
-                            log::warn!("implement missing midi messages {:?}", evt.message)
-                        }
+                        _ => { }
                     }
                 }
 
@@ -123,12 +126,12 @@ impl SynthBackend {
         stream
     }
 
-    pub fn new_output_connection(&mut self, path: &Path) -> SynthOutputConnection {
+    pub fn new_output_connection(&mut self) -> SynthOutputConnection {
         let (tx, rx) = std::sync::mpsc::channel::<MidiEvent>();
         let _stream = match self.sample_format {
-            cpal::SampleFormat::F32 => self.run::<f32>(rx, path),
-            cpal::SampleFormat::I16 => self.run::<i16>(rx, path),
-            cpal::SampleFormat::U16 => self.run::<u16>(rx, path),
+            cpal::SampleFormat::F32 => self.run::<f32>(rx),
+            cpal::SampleFormat::I16 => self.run::<i16>(rx),
+            cpal::SampleFormat::U16 => self.run::<u16>(rx),
         };
 
         SynthOutputConnection { _stream, tx }

@@ -3,10 +3,6 @@ use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use super::color::Color;
 use super::GpuInitError;
 
-pub fn default_backends() -> wgpu::Backends {
-    wgpu::util::backend_bits_from_env().unwrap_or(wgpu::Backends::all())
-}
-
 pub struct Gpu {
     pub device: wgpu::Device,
 
@@ -23,9 +19,9 @@ impl Gpu {
         width: u32,
         height: u32,
     ) -> Result<(Self, Surface), GpuInitError> {
-        let surface = unsafe { instance.create_surface(window) };
+        let surface = unsafe { instance.create_surface(window) }.unwrap();
         let gpu = Self::new(instance, Some(&surface)).await?;
-        let surface = Surface::new(&gpu.device, surface, width, height);
+        let surface = Surface::new(&gpu.device, &gpu.adapter, surface, width, height);
 
         Ok((gpu, surface))
     }
@@ -34,12 +30,9 @@ impl Gpu {
         instance: &wgpu::Instance,
         compatible_surface: Option<&wgpu::Surface>,
     ) -> Result<Self, GpuInitError> {
-        let power_preference = wgpu::util::power_preference_from_env()
-            .unwrap_or(wgpu::PowerPreference::HighPerformance);
-
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference,
+                power_preference: wgpu::PowerPreference::default(),
                 compatible_surface,
                 force_fallback_adapter: false,
             })
@@ -49,17 +42,10 @@ impl Gpu {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
+                    label: None,
                     features: wgpu::Features::empty(),
-                    limits: wgpu::Limits {
-                        max_compute_workgroup_storage_size: 0,
-                        max_compute_invocations_per_workgroup: 0,
-                        max_compute_workgroup_size_x: 0,
-                        max_compute_workgroup_size_y: 0,
-                        max_compute_workgroup_size_z: 0,
-                        max_compute_workgroups_per_dimension: 0,
-                        ..wgpu::Limits::downlevel_defaults()
-                    }
-                    .using_resolution(adapter.limits()),
+                    limits: wgpu::Limits::downlevel_webgl2_defaults()
+                        .using_resolution(adapter.limits()),
                     ..Default::default()
                 },
                 None,
@@ -73,13 +59,11 @@ impl Gpu {
         let staging_belt = wgpu::util::StagingBelt::new(5 * 1024);
 
         let adapter_info = adapter.get_info();
-        let format = compatible_surface.map(|s| s.get_supported_formats(&adapter)[0]);
 
         log::info!(
-            "Using {} ({:?}, Preferred Format: {:?})",
+            "Using {} ({:?})",
             adapter_info.name,
             adapter_info.backend,
-            format
         );
 
         Ok(Self {
@@ -134,14 +118,18 @@ pub struct Surface {
 }
 
 impl Surface {
-    pub fn new(device: &wgpu::Device, surface: wgpu::Surface, width: u32, height: u32) -> Self {
+    pub fn new(device: &wgpu::Device, adapter: &wgpu::Adapter, surface: wgpu::Surface, width: u32, height: u32) -> Self {
+        let swapchain_capabilities = surface.get_capabilities(adapter);
+        let swapchain_format = swapchain_capabilities.formats[0];
+
         let surface_configuration = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: super::TEXTURE_FORMAT,
+            format: swapchain_format,
             width,
             height,
             present_mode: wgpu::PresentMode::Fifo,
-            alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            alpha_mode: swapchain_capabilities.alpha_modes[0],
+            view_formats: vec!(),
         };
 
         surface.configure(device, &surface_configuration);

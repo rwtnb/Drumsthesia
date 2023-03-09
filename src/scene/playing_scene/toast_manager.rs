@@ -45,14 +45,14 @@ impl ToastManager {
 }
 
 struct Toast {
-    start_time: std::time::Instant,
+    start_time: instant::Instant,
     inner_draw: Box<dyn Fn(&mut Target)>,
 }
 
 impl Toast {
     fn new(draw: impl Fn(&mut Target) + 'static) -> Self {
         Self {
-            start_time: std::time::Instant::now(),
+            start_time: instant::Instant::now(),
             inner_draw: Box::new(draw),
         }
     }

@@ -5,4 +5,8 @@ authors = ["Poly <bartek.marynczak@op.pl>"]
 edition = "2021"
 
 [dependencies]
+js-sys = "0.3.61"
 midly = "0.5.3"
+wasm-bindgen = "0.2.84"
+wasm-bindgen-futures = "0.4.34"
+web-sys = { version = "0.3.61"}

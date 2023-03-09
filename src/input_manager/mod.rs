@@ -23,7 +23,7 @@ impl InputManager {
         self.input.inputs()
     }
 
-    pub fn connect_input(&mut self, port: midi_io::MidiInputPort) {
+    pub async fn connect_input(&mut self, port: midi_io::MidiInputPort) {
         let tx = self.tx.clone();
         //midi_io::MidiInputManager::connect_input(port, move |message| {
         //    let event = LiveEvent::parse(message).unwrap();

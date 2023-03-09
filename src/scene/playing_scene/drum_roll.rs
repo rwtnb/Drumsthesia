@@ -1,6 +1,5 @@
 use crate::{
     utils::{Point, Size},
-    TransformUniform, Uniform,
 };
 
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
@@ -8,7 +7,7 @@ use wgpu_glyph::{GlyphBrush, Section};
 
 mod lane;
 pub use lane::Lane;
-use wgpu_jumpstart::Gpu;
+use wgpu_jumpstart::{Gpu, TransformUniform, Uniform};
 
 use super::midi_mapping::{get_midi_mapping_for_note, get_midi_mappings};
 
@@ -106,6 +105,7 @@ impl DrumRoll {
                     [1.0, 1.0, 1.0, 0.022]
                 };
 
+                log::info!("test");
                 instances.push(QuadInstance {
                     position: lane.pos.into(),
                     size: [self.size.w, lane.size.h],

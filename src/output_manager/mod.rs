@@ -125,17 +125,7 @@ impl OutputManager {
                 #[cfg(feature = "synth")]
                 OutputDescriptor::Synth(ref font) => {
                     if let Some(ref mut synth) = self.synth_backend {
-                        if let Some(font) = font.clone() {
-                            self.output_connection =
-                                (desc, Box::new(synth.new_output_connection(&font)));
-                            self.selected_font_path = Some(font);
-                        } else if let Some(path) = crate::utils::resources::default_sf2() {
-                            if path.exists() {
-                                self.output_connection =
-                                    (desc, Box::new(synth.new_output_connection(&path)));
-                                self.selected_font_path = Some(path);
-                            }
-                        }
+                        self.output_connection = (desc, Box::new(synth.new_output_connection()));
                     }
                 }
                 OutputDescriptor::MidiOut(ref info) => {

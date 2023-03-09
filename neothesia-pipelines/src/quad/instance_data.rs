@@ -1,7 +1,7 @@
 use wgpu::vertex_attr_array;
 use wgpu_jumpstart::wgpu;
 
-use bytemuck::{Pod, Zeroable};
+use bytemuck_derive::{Pod, Zeroable};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Pod, Zeroable, PartialEq)]
@@ -24,15 +24,14 @@ impl Default for QuadInstance {
 }
 
 impl QuadInstance {
-    pub fn attributes() -> [wgpu::VertexAttribute; 4] {
-        vertex_attr_array!(1 => Float32x2, 2 => Float32x2, 3 => Float32x4, 4 => Float32x4)
-    }
+    pub const ATTRIBUTES: [wgpu::VertexAttribute; 4] =
+        vertex_attr_array![1 => Float32x2, 2 => Float32x2, 3 => Float32x4, 4 => Float32x4];
 
-    pub fn layout(attributes: &[wgpu::VertexAttribute]) -> wgpu::VertexBufferLayout {
+    pub fn layout<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<QuadInstance>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Instance,
-            attributes,
+            attributes: &Self::ATTRIBUTES,
         }
     }
 }

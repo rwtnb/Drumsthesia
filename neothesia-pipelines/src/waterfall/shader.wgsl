@@ -6,6 +6,9 @@ struct ViewUniform {
 
 struct TimeUniform {
     time: f32,
+    _p1: f32,
+    _p2: f32,
+    _p3: f32,
 }
 
 @group(0) @binding(0)
@@ -36,11 +39,10 @@ struct VertexOutput {
     @location(4) note_pos: vec2<f32>,
 }
 
-let speed: f32 = 400.0;
 
 @vertex
 fn vs_main(vertex: Vertex, note: NoteInstance) -> VertexOutput {
-    let speed = speed / view_uniform.scale;
+    let speed = 400.0 / view_uniform.scale;
     let size = vec2<f32>(note.size.x, note.size.y);
 
     let x = view_uniform.size.x / 3.0;

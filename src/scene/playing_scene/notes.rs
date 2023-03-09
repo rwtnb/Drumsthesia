@@ -1,8 +1,6 @@
 use crate::target::Target;
-use crate::TransformUniform;
-use crate::Uniform;
 use neothesia_pipelines::waterfall::{NoteInstance, WaterfallPipeline};
-use wgpu_jumpstart::Color;
+use wgpu_jumpstart::{Color, TransformUniform, Uniform};
 
 use super::drum_roll::Lane;
 

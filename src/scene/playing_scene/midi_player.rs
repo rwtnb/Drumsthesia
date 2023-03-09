@@ -1,10 +1,9 @@
-use crate::{target::Target, OutputManager};
 use midly::MidiMessage;
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
     rc::Rc,
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Duration},
 };
 use winit::{
     dpi::PhysicalPosition,
@@ -13,6 +12,8 @@ use winit::{
 
 mod rewind_controler;
 use rewind_controler::RewindController;
+
+use crate::{target::Target, output_manager::OutputManager};
 
 use super::midi_mapping::get_midi_mapping_for_note;
 

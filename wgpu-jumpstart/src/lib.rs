@@ -15,7 +15,7 @@ mod transform_uniform;
 pub use wgpu;
 pub use {
     color::Color,
-    gpu::{default_backends, Gpu, Surface},
+    gpu::{Gpu, Surface},
     instances::Instances,
     render_pipeline_builder::RenderPipelineBuilder,
     shape::Shape,
@@ -23,4 +23,4 @@ pub use {
     uniform::Uniform,
 };
 
-pub const TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
+pub const TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;

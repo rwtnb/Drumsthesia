@@ -1,6 +1,6 @@
 use wgpu_jumpstart::wgpu;
 
-use bytemuck::{Pod, Zeroable};
+use bytemuck_derive::{Pod, Zeroable};
 use wgpu::vertex_attr_array;
 
 #[repr(C)]
@@ -14,15 +14,14 @@ pub struct NoteInstance {
 }
 
 impl NoteInstance {
-    pub fn attributes() -> [wgpu::VertexAttribute; 5] {
-        vertex_attr_array!(1 => Float32x2, 2 => Float32x2, 3 => Float32x3, 4 => Float32, 5 => Float32)
-    }
+    pub const ATTRIBUTES: [wgpu::VertexAttribute; 5] = 
+        vertex_attr_array![1 => Float32x2, 2 => Float32x2, 3 => Float32x3, 4 => Float32, 5 => Float32];
 
-    pub fn layout(attributes: &[wgpu::VertexAttribute]) -> wgpu::VertexBufferLayout {
+    pub fn layout<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<NoteInstance>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Instance,
-            attributes,
+            attributes: &Self::ATTRIBUTES,
         }
     }
 }

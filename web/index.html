@@ -1,13 +1,32 @@
-<html>
-  <head>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-  </head>
-  <body>
-    <!-- Note the usage of `type=module` here as this is an ES6 module -->
-    <script type="module">
-      import('../generated/drumsthesia.js').then(module => module.default());
-    </script>
-  </body>
-</html>
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drumsthesia</title>
+    <style>
+        canvas {
+            background-color: black;
+        }
+    </style>
+    <script type="module">
+      import init from './drumsthesia.js';
+      window.start = function start() {
+        navigator.requestMIDIAccess().then((access) => {
+          console.log(access.inputs.values().next())
+        }).then(init)
+          .then(() => {
+            console.log('WASM Loaded');
+          });
+      }
+    </script>
+</head>
+
+<body id="wasm-example">
+  <button onclick="start()">Start</button>
+</body>
+
+</html>
 

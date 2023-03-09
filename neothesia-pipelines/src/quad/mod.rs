@@ -30,12 +30,10 @@ impl<'a> QuadPipeline {
                     push_constant_ranges: &[],
                 });
 
-        let ri_attrs = QuadInstance::attributes();
-
         let render_pipeline =
             RenderPipelineBuilder::new(&render_pipeline_layout, "vs_main", &shader)
                 .fragment("fs_main", &shader)
-                .vertex_buffers(&[Shape::layout(), QuadInstance::layout(&ri_attrs)])
+                .vertex_buffers(&[Shape::layout(), QuadInstance::layout()])
                 .build(&gpu.device);
 
         let quad = Shape::new_quad(&gpu.device);
