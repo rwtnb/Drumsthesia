@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.rwtnb.neothesia</id>
+  <launchable type="desktop-id">io.github.rwtnb.drumsthesia.desktop</launchable>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+
+  <releases>
+    <release version="0.0.1" date="2023-04-17">
+      <url>https://github.io/rwtnb/Drumsthesia/releases/tag/0.0.1</url>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1" />
+
+  <url type="homepage">https://rwtnb.github.io/Drumsthesia</url>
+  <url type="bugtracker">https://github.io/rwtnb/Drumsthesia/issues</url>
+
+  <name>Neothesia</name>
+  <summary>GPU accelerated midi visualizer</summary>
+  <description>
+    <p>Drumsthesia is a simple software that helps you to learn how to play the drums.</p>
+    <p>For more info visit https://github.com/rwtnb/Drumsthesia</p>
+  </description>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://i.imgur.com/1R5uOnA.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://i.imgur.com/WUO61EN.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://i.imgur.com/QfdMwMI.png</image>
+    </screenshot>
+  </screenshots>
+</component>

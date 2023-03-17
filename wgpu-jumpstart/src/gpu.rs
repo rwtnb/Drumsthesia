@@ -35,7 +35,7 @@ impl Gpu {
         compatible_surface: Option<&wgpu::Surface>,
     ) -> Result<Self, GpuInitError> {
         let power_preference = wgpu::util::power_preference_from_env()
-            .unwrap_or(wgpu::PowerPreference::HighPerformance);
+            .unwrap_or(wgpu::PowerPreference::LowPower);
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
