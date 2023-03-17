@@ -1,0 +1,5 @@
+/target
+**/*.rs.bk
+/settings.ron
+/out
+**/.DS_Store
