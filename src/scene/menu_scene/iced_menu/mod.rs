@@ -17,7 +17,7 @@ use crate::{
     scene::menu_scene::neo_btn::neo_button,
     target::Target,
     ui::iced_state::{Element, Program},
-    NeothesiaEvent,
+    NeothesiaEvent, config::PlayingSceneLayout,
 };
 
 mod theme;
@@ -41,6 +41,7 @@ pub enum Message {
 
     WaitForNotesCheckbox(bool),
     GuideNotesCheckbox(bool),
+    SelectLayout(PlayingSceneLayout),
 
     GoToPage(Step),
     ExitApp,
@@ -58,6 +59,9 @@ struct Data {
     wait_for_notes: bool,
     guide_notes: bool,
     is_loading: bool,
+
+    layouts: Vec<PlayingSceneLayout>,
+    selected_layout: Option<PlayingSceneLayout>,
 
     logo_handle: ImageHandle,
 }
@@ -82,6 +86,8 @@ impl AppUi {
 
                 wait_for_notes: target.config.wait_for_notes,
                 guide_notes: target.config.guide_notes,
+                layouts: vec![PlayingSceneLayout::Horizontal, PlayingSceneLayout::Vertical],
+                selected_layout: Some(PlayingSceneLayout::Horizontal),
                 is_loading: false,
 
                 logo_handle: ImageHandle::from_memory(include_bytes!("../img/banner.png").to_vec()),
@@ -159,6 +165,10 @@ impl Program for AppUi {
             Message::GuideNotesCheckbox(v) => {
                 target.config.guide_notes = v;
                 self.data.guide_notes = v;
+            }
+            Message::SelectLayout(v) => {
+                target.config.layout = v;
+                self.data.selected_layout = Some(v);
             }
             Message::Tick => {
                 self.data.outputs = target.output_manager.borrow().outputs();
@@ -317,10 +327,10 @@ impl<'a> Step {
         let mut content = top_padded(column);
 
         if data.midi_file.is_some() {
-            let mute_drums = checkbox("Guide Notes", data.guide_notes, Message::GuideNotesCheckbox)
+            let guide_notes = checkbox("Guide Notes", data.guide_notes, Message::GuideNotesCheckbox)
                 .style(theme::checkbox());
 
-            let play_along = checkbox("Wait For Notes", data.wait_for_notes, Message::WaitForNotesCheckbox)
+            let wait_for_notes = checkbox("Wait For Notes", data.wait_for_notes, Message::WaitForNotesCheckbox)
                 .style(theme::checkbox());
 
             let play = neo_button("Play")
@@ -328,7 +338,7 @@ impl<'a> Step {
                 .min_width(80)
                 .on_press(Message::Play);
 
-            let row = row![mute_drums, play_along, play]
+            let row = row![guide_notes, wait_for_notes, play]
                 .spacing(20)
                 .align_items(Alignment::Center);
 
@@ -395,6 +405,21 @@ impl<'a> Step {
         ]
         .spacing(10);
 
+        let selected_layout =  data.selected_layout;
+        let layout_list = pick_list(&data.layouts, selected_layout, Message::SelectLayout)
+            .width(Length::Fill)
+            .style(theme::pick_list());
+
+        let layout_title = text("Layout:")
+            .vertical_alignment(Vertical::Center)
+            .height(Length::Units(30));
+
+        let layout_list = row![
+            layout_title.width(Length::Units(60)),
+            layout_list.width(Length::FillPortion(3)),
+        ]
+        .spacing(10);
+
         let buttons = row![neo_button("Back")
             .on_press(Message::GoToPage(Step::Main))
             .width(Length::Fill),]
@@ -406,6 +431,7 @@ impl<'a> Step {
             col![
                 output_list, 
                 input_list, 
+                layout_list
             ].spacing(10),
             buttons
         ]

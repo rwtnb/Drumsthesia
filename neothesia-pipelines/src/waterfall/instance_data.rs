@@ -13,8 +13,8 @@ pub struct NoteInstance {
 }
 
 impl NoteInstance {
-    pub fn attributes() -> [wgpu::VertexAttribute; 5] {
-        vertex_attr_array!(1 => Float32x2, 2 => Float32x2, 3 => Float32x3, 4 => Float32, 5 => Float32)
+    pub fn attributes() -> [wgpu::VertexAttribute; 4] {
+        vertex_attr_array!(1 => Float32x2, 2 => Float32x2, 3 => Float32x3, 4 => Float32)
     }
 
     pub fn layout(attributes: &[wgpu::VertexAttribute]) -> wgpu::VertexBufferLayout {

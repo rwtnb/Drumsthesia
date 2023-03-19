@@ -52,7 +52,6 @@ impl SynthBackend {
             synth.add_font(font, true);
             synth.set_sample_rate(sample_rate);
             synth.program_reset();
-            synth.set_polyphony(128).unwrap();
 
             move || {
                 let (l, r) = synth.read_next();

@@ -1,3 +1,4 @@
+use crate::config::PlayingSceneLayout;
 use crate::config::default_color_schema;
 use crate::target::Target;
 use crate::TransformUniform;
@@ -11,17 +12,21 @@ use super::midi_mapping::midi_mappings_count;
 
 pub struct Marks {
     pipeline: WaterfallPipeline,
+    is_vertical_layout: bool
 }
 
 impl Marks {
     pub fn new(target: &mut Target, lanes: &Vec<Lane>) -> Self {
+        let is_vertical_layout = target.config.layout == PlayingSceneLayout::Vertical;
         let pipeline = WaterfallPipeline::new(
             &target.gpu,
             &target.transform_uniform,
             target.midi_file.as_ref().unwrap().merged_track.notes.len(),
+            is_vertical_layout
         );
         let mut marks = Self {
             pipeline,
+            is_vertical_layout
         };
         marks.resize(target, lanes, &Default::default());
         marks

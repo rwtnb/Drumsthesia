@@ -118,6 +118,23 @@ const MAPPINGS: [MidiMapping; 12] = [
     },
 ];
 
+pub fn get_all_midi_mappings() -> Vec<MidiMapping> {
+    vec![
+        MAPPINGS[0],
+        MAPPINGS[10],
+        MAPPINGS[7],
+        MAPPINGS[8],
+        MAPPINGS[9],
+        MAPPINGS[4],
+        MAPPINGS[5],
+        MAPPINGS[11],
+        MAPPINGS[6],
+        MAPPINGS[1],
+        MAPPINGS[3],
+        MAPPINGS[2],
+    ]
+}
+
 pub fn get_midi_mappings(notes: Vec<u8>) -> Vec<MidiMapping> {
     MAPPINGS.iter()
         .filter(|m| m.accept_notes(notes.clone()))

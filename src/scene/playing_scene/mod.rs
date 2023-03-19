@@ -14,7 +14,7 @@ use self::{
 };
 
 use super::{Scene, SceneType};
-use crate::{target::Target, NeothesiaEvent};
+use crate::{target::Target, NeothesiaEvent, config::PlayingSceneLayout};
 
 mod drum_roll;
 mod marks;
@@ -39,7 +39,6 @@ pub struct PlayingScene {
     played_notes: Vec<(f32, MidiMapping)>,
     quad_pipeline: QuadPipeline,
     toast_manager: ToastManager,
-    rendered: bool,
 }
 
 impl PlayingScene {
@@ -60,6 +59,7 @@ impl PlayingScene {
             &target.gpu,
             &target.transform_uniform,
             target.window_state.logical_size,
+            target.config.layout == PlayingSceneLayout::Vertical
         );
 
         let player = MidiPlayer::new(target);
@@ -78,48 +78,69 @@ impl PlayingScene {
             played_notes: Default::default(),
             quad_pipeline: QuadPipeline::new(&target.gpu, &target.transform_uniform),
             toast_manager: ToastManager::default(),
-            rendered: false,
         }
     }
 
     fn update_progresbar(&mut self, target: &mut Target) {
-        let ww = target.window_state.logical_size.width;
-        let wh = target.window_state.logical_size.height;
-        let size_x = ww * self.player.percentage();
+        let is_vertical = target.config.layout == PlayingSceneLayout::Vertical;
+        let window_w = target.window_state.logical_size.width;
+        let window_h = target.window_state.logical_size.height;
+        let fg_bar_w = window_w * self.player.percentage();
 
-        self.quad_pipeline.update_instance_buffer(
-            &target.gpu.queue,
-            vec![
-                QuadInstance {
-                    // bar background
-                    position: [0.0, 0.0],
-                    size: [ww, 5.0],
-                    color: Color::from_rgba8(100, 100, 100, 1.0).into_linear_rgba(),
-                    ..Default::default()
-                },
-                QuadInstance {
-                    // bar foreground
-                    position: [0.0, 0.0],
-                    size: [size_x, 5.0],
-                    color: Color::from_rgba8(200, 200, 200, 1.0).into_linear_rgba(),
-                    ..Default::default()
-                },
-                QuadInstance {
-                    // dark panel
-                    position: [0.0, 5.0],
-                    size: [ww * 0.33333, wh - 5.0],
-                    color: [0.0, 0.0, 0.0, 0.8],
-                    ..Default::default()
-                },
-                QuadInstance {
-                    // playback pointer
-                    position: [ww * 0.33333, 5.0],
-                    size: [1.0, wh - 5.0],
-                    color: [0.88, 0.67, 0.03, 0.5],
-                    ..Default::default()
-                },
-            ],
-        );
+        let mut instances = Vec::with_capacity(4);
+
+        // bar background
+        instances.push(QuadInstance {
+            position: [0.0, 0.0],
+            size: [window_w, 5.0],
+            color: Color::from_rgba8(100, 100, 100, 1.0).into_linear_rgba(),
+            ..Default::default()
+        });
+
+        // bar foreground
+        instances.push(QuadInstance {
+            position: [0.0, 0.0],
+            size: [fg_bar_w, 5.0],
+            color: Color::from_rgba8(200, 200, 200, 1.0).into_linear_rgba(),
+            ..Default::default()
+        });
+
+        if is_vertical {
+            // dark panel
+            instances.push(QuadInstance {
+                position: [0.0, window_h - (window_h / 5.0)],
+                size: [window_w, window_h / 5.0],
+                color: [0.0, 0.0, 0.0, 0.8],
+                ..Default::default()
+            });
+
+            // playback pointer
+            instances.push(QuadInstance {
+                position: [0.0, window_h - (window_h / 5.0)],
+                size: [window_w, 1.0],
+                color: [0.88, 0.67, 0.03, 0.5],
+                ..Default::default()
+            });
+        } else {
+            // dark panel
+            instances.push(QuadInstance {
+                position: [0.0, 5.0],
+                size: [window_w / 3.0, window_h - 5.0],
+                color: [0.0, 0.0, 0.0, 0.8],
+                ..Default::default()
+            });
+
+            // playback pointer
+            instances.push(QuadInstance {
+                position: [window_w / 3.0, 5.0],
+                size: [1.0, window_h - 5.0],
+                color: [0.88, 0.67, 0.03, 0.5],
+                ..Default::default()
+            });
+        }
+
+        self.quad_pipeline
+            .update_instance_buffer(&target.gpu.queue, instances);
     }
 }
 
