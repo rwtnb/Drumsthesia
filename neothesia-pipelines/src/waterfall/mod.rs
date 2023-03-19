@@ -22,14 +22,21 @@ impl<'a> WaterfallPipeline {
         gpu: &Gpu,
         transform_uniform: &Uniform<TransformUniform>,
         notes_count: usize,
+        is_vertical_layout: bool
     ) -> Self {
+        let vertical_shader = include_str!("./vertical_shader.wgsl");
+        let horizontal_shader = include_str!("./horizontal_shader.wgsl");
+        let shader_file = if is_vertical_layout {
+            vertical_shader
+        } else {
+            horizontal_shader
+        };
+
         let shader = gpu
             .device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some("RectanglePipeline::shader"),
-                source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
-                    "./shader.wgsl"
-                ))),
+                source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(shader_file)),
             });
 
         let time_uniform = Uniform::new(

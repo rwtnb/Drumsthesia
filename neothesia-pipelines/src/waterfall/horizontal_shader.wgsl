@@ -23,7 +23,6 @@ struct NoteInstance {
     @location(2) size: vec2<f32>,
     @location(3) color: vec3<f32>,
     @location(4) radius: f32,
-    @location(5) spacing: f32,
 }
 
 struct VertexOutput {

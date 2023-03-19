@@ -1,8 +1,23 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, fmt::Display};
 
 use serde::{Deserialize, Serialize};
 
 use crate::output_manager::OutputDescriptor;
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum PlayingSceneLayout {
+    Horizontal,
+    Vertical
+}
+
+impl Display for PlayingSceneLayout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PlayingSceneLayout::Vertical => write!(f, "Vertical"),
+            PlayingSceneLayout::Horizontal => write!(f, "Horizontal")
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ColorSchema {
@@ -40,9 +55,9 @@ pub struct Config {
     #[serde(skip_serializing)]
     pub guide_notes: bool,
 
-    #[serde(default = "default_use_midi_instruments")]
+    #[serde(default = "default_layout")]
     #[serde(skip_serializing)]
-    pub use_midi_instruments: bool,
+    pub layout: PlayingSceneLayout,
 
     #[serde(default = "default_color_schema")]
     pub color_schema: ColorSchema,
@@ -86,7 +101,7 @@ impl Config {
             playback_offset: default_playback_offset(),
             wait_for_notes: default_wait_for_notes(),
             guide_notes: default_guide_notes(),
-            use_midi_instruments: default_use_midi_instruments(),
+            layout: default_layout(),
             color_schema: default_color_schema(),
             background_color: Default::default(),
             output: default_output(),
@@ -132,11 +147,11 @@ fn default_wait_for_notes() -> bool {
 }
 
 fn default_guide_notes() -> bool {
-    true
+    false
 }
 
-fn default_use_midi_instruments() -> bool {
-    false
+fn default_layout() -> PlayingSceneLayout {
+    PlayingSceneLayout::Horizontal
 }
 
 pub const fn default_color_schema() -> ColorSchema {
