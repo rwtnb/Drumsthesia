@@ -7,11 +7,11 @@ A shameless copy of [Neothesia](https://github.com/PolyMeilex/Neothesia) adapted
 
 ![menu](./docs/assets/menu.png)
 
-*Horizontal Layout*
+**Horizontal Layout**
 ![playing horizontal](./docs/assets/playing.png)
 
-*Vertical Layout*
-![playing vertical](./docs/assets/playing.png)
+**Vertical Layout**
+![playing vertical](./docs/assets/playing_vertical.png)
 
 ## How to use
  - Download some GuitarPro(.gp5) file from the internet like [songsterr.com](https://songsterr.com)
