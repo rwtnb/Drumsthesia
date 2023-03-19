@@ -254,14 +254,18 @@ impl Scene for PlayingScene {
                 );
 
                 if let Some(mapping) = get_midi_mapping_for_note(key.as_int()) {
-                    self.player
-                        .output_manager
-                        .borrow_mut()
-                        .midi_event(event.channel, event.message);
+                    if !target.config.mute_drums {
+                        self.player
+                            .output_manager
+                            .borrow_mut()
+                            .midi_event(event.channel, event.message);
+                    }
+
                     self.played_notes.push((
                         self.player.time_without_lead_in() + target.config.playback_offset,
                         mapping,
                     ));
+
                     self.marks
                         .resize(target, self.drum_roll.lanes(), &self.played_notes);
                 }
