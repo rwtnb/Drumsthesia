@@ -43,10 +43,17 @@ impl Marks {
         for (time, mapping) in played_notes {
             if let Some(lane) = lanes.iter().find(|i| i.mapping.id == mapping.id) {
                 let color: Color = default_color_schema().red.into();
-                let x = *time;
-                let h = lane.size.h * 0.1;
-                let w = h;
-                let y = lane.pos.y + (lane.size.h / 2.0) - (h / 2.0);
+                let mut x = *time;
+                let mut h = lane.size.h * 0.1;
+                let mut w = h;
+                let mut y = lane.pos.y + (lane.size.h / 2.0) - (h / 2.0);
+
+                if self.is_vertical_layout {
+                    y = *time;
+                    h = lane.size.w * 0.1;
+                    w = h;
+                    x = lane.pos.x + (lane.size.w / 2.0) - (w / 2.0);
+                }
 
                 instances.push(NoteInstance {
                     position: [x, y],
