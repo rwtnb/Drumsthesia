@@ -41,6 +41,7 @@ pub enum Message {
 
     WaitForNotesCheckbox(bool),
     GuideNotesCheckbox(bool),
+    MuteDrumsCheckbox(bool),
     SelectLayout(PlayingSceneLayout),
 
     GoToPage(Step),
@@ -58,6 +59,7 @@ struct Data {
 
     wait_for_notes: bool,
     guide_notes: bool,
+    mute_drums: bool,
     is_loading: bool,
 
     layouts: Vec<PlayingSceneLayout>,
@@ -86,6 +88,7 @@ impl AppUi {
 
                 wait_for_notes: target.config.wait_for_notes,
                 guide_notes: target.config.guide_notes,
+                mute_drums: target.config.mute_drums,
                 layouts: vec![PlayingSceneLayout::Horizontal, PlayingSceneLayout::Vertical],
                 selected_layout: Some(PlayingSceneLayout::Horizontal),
                 is_loading: false,
@@ -165,6 +168,10 @@ impl Program for AppUi {
             Message::GuideNotesCheckbox(v) => {
                 target.config.guide_notes = v;
                 self.data.guide_notes = v;
+            }
+            Message::MuteDrumsCheckbox(v) => {
+                target.config.mute_drums = v;
+                self.data.mute_drums = v;
             }
             Message::SelectLayout(v) => {
                 target.config.layout = v;
@@ -330,6 +337,9 @@ impl<'a> Step {
             let guide_notes = checkbox("Guide Notes", data.guide_notes, Message::GuideNotesCheckbox)
                 .style(theme::checkbox());
 
+            let mute_drums = checkbox("Mute Drums", data.mute_drums, Message::MuteDrumsCheckbox)
+                .style(theme::checkbox());
+
             let wait_for_notes = checkbox("Wait For Notes", data.wait_for_notes, Message::WaitForNotesCheckbox)
                 .style(theme::checkbox());
 
@@ -338,7 +348,7 @@ impl<'a> Step {
                 .min_width(80)
                 .on_press(Message::Play);
 
-            let row = row![guide_notes, wait_for_notes, play]
+            let row = row![guide_notes, mute_drums, wait_for_notes, play]
                 .spacing(20)
                 .align_items(Alignment::Center);
 
