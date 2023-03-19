@@ -42,7 +42,7 @@ impl SynthBackend {
 
             let mut synth = oxisynth::Synth::new(oxisynth::SynthDescriptor {
                 sample_rate,
-                gain: 0.3,
+                gain: 0.1,
                 ..Default::default()
             })
             .unwrap();

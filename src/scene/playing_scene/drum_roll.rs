@@ -57,7 +57,7 @@ impl DrumRoll {
     }
 
     fn calculate_positions_horizontal(&mut self) {
-        let lane_height = f32::min(self.size.h / self.lanes.len() as f32, self.size.h / 7.0);
+        let lane_height = f32::min(self.size.h / self.lanes.len() as f32, 110.0);
         let mut offset = (self.size.h / 2.0) - (lane_height * self.lanes.len() as f32 / 2.0);
 
         for lane in self.lanes.iter_mut() {
@@ -76,7 +76,7 @@ impl DrumRoll {
     }
 
     fn calculate_positions_vertical(&mut self) {
-        let lane_width = f32::min(self.size.w / self.lanes.len() as f32, self.size.w / 7.0);
+        let lane_width = f32::min(self.size.w / self.lanes.len() as f32, 110.0);
         let mut offset = (self.size.w / 2.0) - (lane_width * self.lanes.len() as f32 / 2.0);
 
         for lane in self.lanes.iter_mut() {
