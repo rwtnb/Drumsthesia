@@ -1,7 +1,10 @@
-# Drumsthesia (Work in progress)
+# Drumsthesia
 A shameless copy of [Neothesia](https://github.com/PolyMeilex/Neothesia) adapted for e-Drums.
 
 [Youtube Video](https://youtu.be/cx1214efD6o)
+
+Binaries for MacOS, Linux (untested) and Windows (untested).
+[Download](https://github.com/rwtnb/Drumsthesia/releases)
 
 ## Screenshots
 
