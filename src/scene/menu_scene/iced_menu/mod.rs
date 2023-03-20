@@ -8,16 +8,17 @@ use iced_native::{
     column as col,
     image::Handle as ImageHandle,
     row,
-    widget::{self, button, checkbox, container, image, pick_list, text, vertical_space},
+    widget::{self, button, checkbox, container, image, pick_list, slider, text, vertical_space},
     Command, Length, Padding,
 };
 
 use crate::{
+    config::PlayingSceneLayout,
     output_manager::OutputDescriptor,
     scene::menu_scene::neo_btn::neo_button,
     target::Target,
     ui::iced_state::{Element, Program},
-    NeothesiaEvent, config::PlayingSceneLayout,
+    NeothesiaEvent,
 };
 
 mod theme;
@@ -42,6 +43,9 @@ pub enum Message {
     WaitForNotesCheckbox(bool),
     GuideNotesCheckbox(bool),
     MuteDrumsCheckbox(bool),
+
+    DrumsVolumeSlider(u8),
+    MusicVolumeSlider(u8),
     SelectLayout(PlayingSceneLayout),
 
     GoToPage(Step),
@@ -61,6 +65,9 @@ struct Data {
     guide_notes: bool,
     mute_drums: bool,
     is_loading: bool,
+
+    drums_volume: u8,
+    music_volume: u8,
 
     layouts: Vec<PlayingSceneLayout>,
     selected_layout: Option<PlayingSceneLayout>,
@@ -89,6 +96,10 @@ impl AppUi {
                 wait_for_notes: target.config.wait_for_notes,
                 guide_notes: target.config.guide_notes,
                 mute_drums: target.config.mute_drums,
+
+                drums_volume: target.config.drums_volume,
+                music_volume: target.config.music_volume,
+
                 layouts: vec![PlayingSceneLayout::Horizontal, PlayingSceneLayout::Vertical],
                 selected_layout: Some(PlayingSceneLayout::Horizontal),
                 is_loading: false,
@@ -172,6 +183,14 @@ impl Program for AppUi {
             Message::MuteDrumsCheckbox(v) => {
                 target.config.mute_drums = v;
                 self.data.mute_drums = v;
+            }
+            Message::DrumsVolumeSlider(v) => {
+                target.config.drums_volume = v;
+                self.data.drums_volume = v;
+            }
+            Message::MusicVolumeSlider(v) => {
+                target.config.music_volume = v;
+                self.data.music_volume = v;
             }
             Message::SelectLayout(v) => {
                 target.config.layout = v;
@@ -334,14 +353,19 @@ impl<'a> Step {
         let mut content = top_padded(column);
 
         if data.midi_file.is_some() {
-            let guide_notes = checkbox("Guide Notes", data.guide_notes, Message::GuideNotesCheckbox)
-                .style(theme::checkbox());
+            let guide_notes =
+                checkbox("Guide Notes", data.guide_notes, Message::GuideNotesCheckbox)
+                    .style(theme::checkbox());
 
             let mute_drums = checkbox("Mute Drums", data.mute_drums, Message::MuteDrumsCheckbox)
                 .style(theme::checkbox());
 
-            let wait_for_notes = checkbox("Wait For Notes", data.wait_for_notes, Message::WaitForNotesCheckbox)
-                .style(theme::checkbox());
+            let wait_for_notes = checkbox(
+                "Wait For Notes",
+                data.wait_for_notes,
+                Message::WaitForNotesCheckbox,
+            )
+            .style(theme::checkbox());
 
             let play = neo_button("Play")
                 .height(Length::Units(60))
@@ -415,7 +439,7 @@ impl<'a> Step {
         ]
         .spacing(10);
 
-        let selected_layout =  data.selected_layout;
+        let selected_layout = data.selected_layout;
         let layout_list = pick_list(&data.layouts, selected_layout, Message::SelectLayout)
             .width(Length::Fill)
             .style(theme::pick_list());
@@ -430,6 +454,35 @@ impl<'a> Step {
         ]
         .spacing(10);
 
+        let drums_volume_title = text("Drums Volume:")
+            .vertical_alignment(Vertical::Center)
+            .height(Length::Units(30));
+
+        let drums_volume =
+            slider(0..=127, data.drums_volume, Message::DrumsVolumeSlider)
+            .width(Length::Fill)
+            .style(theme::slider());
+
+        let drums_volume_list = row![
+            drums_volume_title.width(Length::Units(120)),
+            drums_volume.width(Length::FillPortion(3))
+        ]
+        .spacing(10);
+
+        let music_volume_title = text("Music Volume:")
+            .vertical_alignment(Vertical::Center)
+            .height(Length::Units(30));
+
+        let music_volume = slider(0..=127, data.music_volume, Message::MusicVolumeSlider)
+            .width(Length::Fill)
+            .style(theme::slider());
+
+        let music_volume_list = row![
+            music_volume_title.width(Length::Units(120)),
+            music_volume.width(Length::FillPortion(3))
+        ]
+        .spacing(10);
+
         let buttons = row![neo_button("Back")
             .on_press(Message::GoToPage(Step::Main))
             .width(Length::Fill),]
@@ -439,10 +492,13 @@ impl<'a> Step {
         let column = col![
             image(data.logo_handle.clone()),
             col![
-                output_list, 
-                input_list, 
-                layout_list
-            ].spacing(10),
+                output_list,
+                input_list,
+                layout_list,
+                drums_volume_list,
+                music_volume_list
+            ]
+            .spacing(10),
             buttons
         ]
         .spacing(40)
