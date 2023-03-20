@@ -48,19 +48,21 @@ pub struct Config {
     pub playback_offset: f32,
 
     #[serde(default = "default_wait_for_notes")]
-    #[serde(skip_serializing)]
     pub wait_for_notes: bool,
 
     #[serde(default = "default_guide_notes")]
-    #[serde(skip_serializing)]
     pub guide_notes: bool,
 
     #[serde(default = "default_mute_drums")]
-    #[serde(skip_serializing)]
     pub mute_drums: bool,
 
+    #[serde(default = "default_drums_volume")]
+    pub drums_volume: u8,
+
+    #[serde(default = "default_music_volume")]
+    pub music_volume: u8,
+
     #[serde(default = "default_layout")]
-    #[serde(skip_serializing)]
     pub layout: PlayingSceneLayout,
 
     #[serde(default = "default_color_schema")]
@@ -106,6 +108,8 @@ impl Config {
             wait_for_notes: default_wait_for_notes(),
             guide_notes: default_guide_notes(),
             mute_drums: default_mute_drums(),
+            drums_volume: default_drums_volume(),
+            music_volume: default_music_volume(),
             layout: default_layout(),
             color_schema: default_color_schema(),
             background_color: Default::default(),
@@ -157,6 +161,14 @@ fn default_guide_notes() -> bool {
 
 fn default_mute_drums() -> bool {
     true
+}
+
+fn default_music_volume() -> u8 {
+    40
+}
+
+fn default_drums_volume() -> u8 {
+    100
 }
 
 fn default_layout() -> PlayingSceneLayout {

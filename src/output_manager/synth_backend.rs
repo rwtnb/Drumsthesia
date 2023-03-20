@@ -42,7 +42,7 @@ impl SynthBackend {
 
             let mut synth = oxisynth::Synth::new(oxisynth::SynthDescriptor {
                 sample_rate,
-                gain: 0.1,
+                gain: 0.3,
                 ..Default::default()
             })
             .unwrap();
@@ -64,6 +64,15 @@ impl SynthBackend {
                                 .send_event(oxisynth::MidiEvent::ProgramChange {
                                     channel,
                                     program_id: program.as_int(),
+                                })
+                                .ok();
+                        }
+                        MidiMessage::Controller { controller, value } => {
+                            synth
+                                .send_event(oxisynth::MidiEvent::ControlChange {
+                                    channel,
+                                    ctrl: controller.as_int(),
+                                    value: value.as_int()
                                 })
                                 .ok();
                         }
@@ -152,7 +161,7 @@ impl OutputConnection for SynthOutputConnection {
             message,
             delta: 0,
             timestamp: Duration::ZERO,
-            track_id: 0
+            track_id: 0,
         };
         self.tx.send(event).ok();
     }

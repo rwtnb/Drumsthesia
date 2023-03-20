@@ -129,3 +129,52 @@ impl iced_style::checkbox::StyleSheet for CheckboxStyle {
         }
     }
 }
+
+pub fn slider() -> iced_native::theme::Slider {
+    iced_native::theme::Slider::Custom(Box::new(SliderStyle))
+}
+
+struct SliderStyle;
+
+impl iced_style::slider::StyleSheet for SliderStyle {
+    type Style = iced_style::Theme;
+
+    fn active(&self, _style: &Self::Style) -> iced_style::slider::Appearance {
+        let active = Color::from_rgba8(128, 128, 128, 1.0);
+        iced_style::slider::Appearance {
+            rail_colors: (Color::BLACK, Color::BLACK),
+            handle: iced_style::slider::Handle {
+                shape: iced_style::slider::HandleShape::Rectangle { width: 10, border_radius: 1.0 },
+                color: Color::BLACK,
+                border_width: 1.0,
+                border_color: Color::BLACK,
+            },
+        }
+    }
+
+    fn hovered(&self, _style: &Self::Style) -> iced_style::slider::Appearance {
+        let active = Color::from_rgba8(128, 128, 128, 1.0);
+        iced_style::slider::Appearance {
+            rail_colors: (Color::BLACK, Color::BLACK),
+            handle: iced_style::slider::Handle {
+                shape: iced_style::slider::HandleShape::Rectangle { width: 10, border_radius: 1.0 },
+                color: Color::BLACK,
+                border_width: 1.0,
+                border_color: active,
+            },
+        }
+    }
+
+    fn dragging(&self, _style: &Self::Style) -> iced_style::slider::Appearance {
+        let active = Color::from_rgba8(128, 128, 128, 0.5);
+        iced_style::slider::Appearance {
+            rail_colors: (Color::BLACK, Color::BLACK),
+            handle: iced_style::slider::Handle {
+                shape: iced_style::slider::HandleShape::Rectangle { width: 10, border_radius: 1.0 },
+                color: active,
+                border_width: 1.0,
+                border_color: active,
+            },
+        }
+    }
+}

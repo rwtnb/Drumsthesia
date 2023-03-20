@@ -1,11 +1,6 @@
 use crate::{target::Target, OutputManager};
 use midly::MidiMessage;
-use std::{
-    cell::RefCell,
-    collections::HashSet,
-    rc::Rc,
-    time::Duration,
-};
+use std::{cell::RefCell, collections::HashSet, rc::Rc, time::Duration};
 use winit::{
     dpi::PhysicalPosition,
     event::{ElementState, KeyboardInput, MouseButton},
@@ -23,6 +18,8 @@ pub struct MidiPlayer {
     midi_file: Rc<lib_midi::Midi>,
     wait_for_notes: WaitForNotes,
     guide_notes: bool,
+    drums_volume: u8,
+    music_volume: u8,
 }
 
 impl MidiPlayer {
@@ -36,7 +33,10 @@ impl MidiPlayer {
             midi_file: midi_file.clone(),
             wait_for_notes: WaitForNotes::default(),
             guide_notes: target.config.guide_notes,
+            drums_volume: target.config.drums_volume,
+            music_volume: target.config.music_volume,
         };
+
         player.update(target, Duration::ZERO);
 
         player
@@ -51,6 +51,21 @@ impl MidiPlayer {
         delta: Duration,
     ) -> Option<Vec<lib_midi::MidiEvent>> {
         rewind_controler::update(self, target);
+
+        if delta.is_zero() {
+            for channel in 0..16 {
+                let value = if channel == 9 {
+                    self.drums_volume
+                } else {
+                    self.music_volume
+                };
+                let msg = MidiMessage::Controller {
+                    controller: midly::num::u7::new(7),
+                    value: midly::num::u7::new(value),
+                };
+                target.output_manager.borrow_mut().midi_event(channel, msg)
+            }
+        }
 
         let elapsed = (delta / 10) * (target.config.speed_multiplier * 10.0) as u32;
 
@@ -71,7 +86,10 @@ impl MidiPlayer {
                         .borrow_mut()
                         .midi_event(channel, event.message);
                 }
-                MidiMessage::Controller { controller: _, value: _ } => {
+                MidiMessage::Controller {
+                    controller: _,
+                    value: _,
+                } => {
                     self.output_manager
                         .borrow_mut()
                         .midi_event(channel, event.message);
