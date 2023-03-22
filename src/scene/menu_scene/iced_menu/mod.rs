@@ -70,7 +70,7 @@ struct Data {
     music_volume: u8,
 
     layouts: Vec<PlayingSceneLayout>,
-    selected_layout: Option<PlayingSceneLayout>,
+    selected_layout: PlayingSceneLayout,
 
     logo_handle: ImageHandle,
 }
@@ -101,7 +101,7 @@ impl AppUi {
                 music_volume: target.config.music_volume,
 
                 layouts: vec![PlayingSceneLayout::Horizontal, PlayingSceneLayout::Vertical],
-                selected_layout: Some(PlayingSceneLayout::Horizontal),
+                selected_layout: target.config.layout,
                 is_loading: false,
 
                 logo_handle: ImageHandle::from_memory(include_bytes!("../img/banner.png").to_vec()),
@@ -194,7 +194,7 @@ impl Program for AppUi {
             }
             Message::SelectLayout(v) => {
                 target.config.layout = v;
-                self.data.selected_layout = Some(v);
+                self.data.selected_layout = v;
             }
             Message::Tick => {
                 self.data.outputs = target.output_manager.borrow().outputs();
@@ -439,7 +439,7 @@ impl<'a> Step {
         ]
         .spacing(10);
 
-        let selected_layout = data.selected_layout;
+        let selected_layout = Some(data.selected_layout);
         let layout_list = pick_list(&data.layouts, selected_layout, Message::SelectLayout)
             .width(Length::Fill)
             .style(theme::pick_list());

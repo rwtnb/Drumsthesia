@@ -66,9 +66,11 @@ pub struct Config {
     pub layout: PlayingSceneLayout,
 
     #[serde(default = "default_color_schema")]
+    #[serde(skip_serializing)]
     pub color_schema: ColorSchema,
 
     #[serde(default)]
+    #[serde(skip_serializing)]
     pub background_color: (u8, u8, u8),
 
     #[serde(default = "default_output")]

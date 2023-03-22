@@ -25,7 +25,7 @@ pub fn default_sf2() -> Option<PathBuf> {
             }
         }
 
-        let flatpak = PathBuf::from("/app/share/neothesia/Arachno SoundFont - Version 1.0.sf2");
+        let flatpak = PathBuf::from("/app/share/drumsthesia/Arachno SoundFont - Version 1.0.sf2");
         if flatpak.exists() {
             Some(flatpak)
         } else {
