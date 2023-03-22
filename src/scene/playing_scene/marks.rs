@@ -8,7 +8,6 @@ use wgpu_jumpstart::Color;
 
 use super::drum_roll::Lane;
 use super::midi_mapping::MidiMapping;
-use super::midi_mapping::midi_mappings_count;
 
 pub struct Marks {
     pipeline: WaterfallPipeline,
@@ -16,7 +15,7 @@ pub struct Marks {
 }
 
 impl Marks {
-    pub fn new(target: &mut Target, lanes: &Vec<Lane>) -> Self {
+    pub fn new(target: &mut Target, lanes: &[Lane]) -> Self {
         let is_vertical_layout = target.config.layout == PlayingSceneLayout::Vertical;
         let pipeline = WaterfallPipeline::new(
             &target.gpu,
@@ -35,7 +34,7 @@ impl Marks {
     pub fn resize(
         &mut self,
         target: &mut Target,
-        lanes: &Vec<Lane>,
+        lanes: &[Lane],
         played_notes: &Vec<(f32, MidiMapping)>,
     ) {
         let mut instances = Vec::new();

@@ -140,7 +140,6 @@ impl iced_style::slider::StyleSheet for SliderStyle {
     type Style = iced_style::Theme;
 
     fn active(&self, _style: &Self::Style) -> iced_style::slider::Appearance {
-        let active = Color::from_rgba8(128, 128, 128, 1.0);
         iced_style::slider::Appearance {
             rail_colors: (Color::BLACK, Color::BLACK),
             handle: iced_style::slider::Handle {

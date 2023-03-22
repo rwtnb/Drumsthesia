@@ -14,7 +14,7 @@ pub struct Notes {
 }
 
 impl Notes {
-    pub fn new(target: &mut Target, lanes: &Vec<Lane>) -> Self {
+    pub fn new(target: &mut Target, lanes: &[Lane]) -> Self {
         let is_vertical_layout = target.config.layout == PlayingSceneLayout::Vertical;
         let notes_pipeline = WaterfallPipeline::new(
             &target.gpu,
@@ -27,7 +27,7 @@ impl Notes {
         notes
     }
 
-    pub fn resize(&mut self, target: &mut Target, lanes: &Vec<Lane>) {
+    pub fn resize(&mut self, target: &mut Target, lanes: &[Lane]) {
         let midi = &target.midi_file.as_ref().unwrap();
         let mut instances = Vec::new();
 

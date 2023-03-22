@@ -1,6 +1,6 @@
 use crate::config::{default_color_schema, ColorSchema};
 
-#[derive(Clone, Copy, Hash)]
+#[derive(Clone, Copy)]
 pub struct MidiMapping {
     pub id: u8,
     pub name: &'static str,
@@ -138,20 +138,12 @@ pub fn get_all_midi_mappings() -> Vec<MidiMapping> {
 pub fn get_midi_mappings(notes: Vec<u8>) -> Vec<MidiMapping> {
     MAPPINGS.iter()
         .filter(|m| m.accept_notes(notes.clone()))
-        .map(|m| *m)
+        .copied()
         .collect()
-}
-
-pub const fn get_midi_mapping(id: u8) -> MidiMapping {
-    MAPPINGS[id as usize]
 }
 
 pub fn get_midi_mapping_for_note(note: u8) -> Option<MidiMapping> {
     MAPPINGS.iter()
         .find(|i| i.accept_note(note))
-        .map(|i| *i)
-}
-
-pub const fn midi_mappings_count() -> usize {
-    MAPPINGS.len()
+        .copied()
 }

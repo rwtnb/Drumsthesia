@@ -46,7 +46,7 @@ impl fmt::Debug for InputDescriptior {
 }
 
 pub trait OutputConnection {
-    fn midi_event(&mut self, channel: u8, msg: MidiMessage){}
+    fn midi_event(&mut self, _channel: u8, _msg: MidiMessage){}
 }
 
 struct DummyOutput {}

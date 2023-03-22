@@ -1,9 +1,8 @@
 use crate::{
     utils::{Point, Size},
-    TransformUniform, Uniform, config::PlayingSceneLayout, target,
+    TransformUniform, Uniform
 };
 
-use iced_native::layout;
 use neothesia_pipelines::quad::{QuadInstance, QuadPipeline};
 use wgpu_glyph::{GlyphBrush, Section};
 
@@ -33,7 +32,7 @@ impl DrumRoll {
         let lanes = if is_vertical_layout {
             get_all_midi_mappings().iter().map(|m| Lane::new(*m)).collect()
         } else {
-            get_midi_mappings(track_notes.clone())
+            get_midi_mappings(track_notes)
             .iter()
             .map(|m| Lane::new(*m))
             .collect()

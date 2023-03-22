@@ -1,13 +1,15 @@
-use std::{env, path::PathBuf};
+use std::{path::PathBuf};
 
+#[cfg(all(target_family = "unix", not(target_os = "macos")))]
 fn home() -> Option<PathBuf> {
-    env::var_os("HOME")
+    std::env::var_os("HOME")
         .and_then(|h| if h.is_empty() { None } else { Some(h) })
         .map(PathBuf::from)
 }
 
+#[cfg(all(target_family = "unix", not(target_os = "macos")))]
 fn xdg_config() -> Option<PathBuf> {
-    env::var_os("XDG_CONFIG_HOME")
+    std::env::var_os("XDG_CONFIG_HOME")
         .and_then(|h| if h.is_empty() { None } else { Some(h) })
         .map(PathBuf::from)
         .map(|p| p.join("neothesia"))
@@ -74,7 +76,7 @@ fn bundled_resource_path(name: &str, extension: &str) -> Option<String> {
         let _: () = msg_send![objc_name, release];
         let _: () = msg_send![objc_ext, release];
         let cstr: *const i8 = msg_send![ini, UTF8String];
-        if cstr != std::ptr::null() {
+        if !cstr.is_null() {
             let rstr = std::ffi::CStr::from_ptr(cstr)
                 .to_string_lossy()
                 .into_owned();

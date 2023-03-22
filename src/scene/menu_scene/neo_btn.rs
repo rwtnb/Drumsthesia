@@ -224,8 +224,8 @@ impl<'a, Message: Clone> Widget<Message, Renderer> for NeoBtn<'a, Message> {
 
         let btn_bar = Primitive::Clip {
             bounds: Rectangle {
-                y: bounds.y + bounds.height - self.border_radius as f32,
-                height: self.border_radius as f32,
+                y: bounds.y + bounds.height - self.border_radius,
+                height: self.border_radius,
                 ..bounds
             },
             content: Box::new(Primitive::Quad {
