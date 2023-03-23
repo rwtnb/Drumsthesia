@@ -17,7 +17,7 @@ A metronome is the perfect tool to help you keep in time. You'll always be on th
 **Wait For Notes:**
 Drumsthesia automatically pauses the song until you've hit the expected notes. This allows you to learn at your own pace and master each section before moving on.
 
-**Sound Output:**
+**Synthesizer:**
 Drumsthesia includes a powerful [built-in SoundFont2 synthesizer](https://github.com/PolyMeilex/OxiSynth), providing high-quality sound for your drum practice. You can also output MIDI events to your DAW(Reaper, GarageBand, Ableton...) or other MIDI devices for an even more realistic experience.
 
 **Volume Control:**
