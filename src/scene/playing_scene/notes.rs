@@ -43,30 +43,16 @@ impl Notes {
 
                 Some(lane) => {
                     let color: Color = lane.mapping.color.into();
-                    let note_duration = note.duration.as_secs_f32() * 4.0;
+                    let note_duration = note.duration.as_secs_f32() * 5.0;
                     let mut note_h = f32::min(lane.size.h * 0.6, 100.0);
-                    let note_w = note_duration * note_h;
-                    let mut note_w = if note_w <= note_h * 0.6 {
-                        note_h * 0.5
-                    } else if note_w <= note_h * 0.8 {
-                        note_h * 0.75
-                    } else {
-                        note_h
-                    };
+                    let mut note_w = f32::min(note_duration * note_h, note_h);
 
                     let mut x = note.start.as_secs_f32();
                     let mut y = lane.pos.y + (lane.size.h / 2.0) - (note_h / 2.0);
 
                     if self.is_vertical_layout {
                         note_w = f32::min(lane.size.w * 0.6, 100.0);
-                        note_h = note_duration * note_w;
-                        note_h = if note_h <= note_w * 0.6 {
-                            note_w * 0.5
-                        } else if note_h <= note_w * 0.8 {
-                            note_w * 0.75
-                        } else {
-                            note_w
-                        };
+                        note_h = f32::min(note_duration * note_w, note_w);
 
                         x = lane.pos.x + (lane.size.w / 2.0) - (note_w / 2.0);
                         y = note.start.as_secs_f32();
