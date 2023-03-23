@@ -2,6 +2,7 @@ mod midi;
 pub mod playback;
 mod track;
 mod utils;
+mod metronome;
 
 pub use midly;
 pub use {midi::*, playback::*, track::*, utils::*};

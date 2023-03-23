@@ -46,6 +46,8 @@ pub enum Message {
 
     DrumsVolumeSlider(u8),
     MusicVolumeSlider(u8),
+    MetronomeVolumeSlider(u8),
+
     SelectLayout(PlayingSceneLayout),
 
     GoToPage(Step),
@@ -68,6 +70,7 @@ struct Data {
 
     drums_volume: u8,
     music_volume: u8,
+    metronome_volume: u8,
 
     layouts: Vec<PlayingSceneLayout>,
     selected_layout: PlayingSceneLayout,
@@ -99,6 +102,7 @@ impl AppUi {
 
                 drums_volume: target.config.drums_volume,
                 music_volume: target.config.music_volume,
+                metronome_volume: (100.0 * target.config.metronome_volume) as u8,
 
                 layouts: vec![PlayingSceneLayout::Horizontal, PlayingSceneLayout::Vertical],
                 selected_layout: target.config.layout,
@@ -191,6 +195,10 @@ impl Program for AppUi {
             Message::MusicVolumeSlider(v) => {
                 target.config.music_volume = v;
                 self.data.music_volume = v;
+            }
+            Message::MetronomeVolumeSlider(v) => {
+                target.config.metronome_volume = v as f32 / 100.0;
+                self.data.metronome_volume = v;
             }
             Message::SelectLayout(v) => {
                 target.config.layout = v;
@@ -454,7 +462,22 @@ impl<'a> Step {
         ]
         .spacing(10);
 
-        let drums_volume_title = text("Drums Volume:")
+        let metronome_volume_title = text("Metronome:")
+            .vertical_alignment(Vertical::Center)
+            .height(Length::Units(30));
+
+        let metronome_volume =
+            slider(0..=100, data.metronome_volume, Message::MetronomeVolumeSlider)
+            .width(Length::Fill)
+            .style(theme::slider());
+
+        let metronome_volume_list = row![
+            metronome_volume_title.width(Length::Units(120)),
+            metronome_volume.width(Length::FillPortion(3))
+        ]
+        .spacing(10);
+
+        let drums_volume_title = text("Drums:")
             .vertical_alignment(Vertical::Center)
             .height(Length::Units(30));
 
@@ -469,7 +492,7 @@ impl<'a> Step {
         ]
         .spacing(10);
 
-        let music_volume_title = text("Music Volume:")
+        let music_volume_title = text("Music:")
             .vertical_alignment(Vertical::Center)
             .height(Length::Units(30));
 
@@ -496,7 +519,8 @@ impl<'a> Step {
                 input_list,
                 layout_list,
                 drums_volume_list,
-                music_volume_list
+                music_volume_list,
+                metronome_volume_list,
             ]
             .spacing(10),
             buttons
