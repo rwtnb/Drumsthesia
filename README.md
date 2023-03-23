@@ -7,7 +7,6 @@ Drumsthesia is the perfect tool for begginer drummers who want to take their ski
 **Download:** [Get the latest release on our Releases Page](https://github.com/rwtnb/Drumsthesia/releases)
 
 Drumsthesia is available for MacOS, Linux (untested), and Windows (untested). 
-Download the appropriate binary for your platform and start rockin' out today!
 
 ## Features
 
