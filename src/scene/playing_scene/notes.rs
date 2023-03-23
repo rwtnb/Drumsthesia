@@ -5,12 +5,11 @@ use crate::Uniform;
 use neothesia_pipelines::waterfall::{NoteInstance, WaterfallPipeline};
 use wgpu_jumpstart::Color;
 
-
 use super::drum_roll::Lane;
 
 pub struct Notes {
     notes_pipeline: WaterfallPipeline,
-    is_vertical_layout: bool
+    is_vertical_layout: bool,
 }
 
 impl Notes {
@@ -20,9 +19,12 @@ impl Notes {
             &target.gpu,
             &target.transform_uniform,
             target.midi_file.as_ref().unwrap().merged_track.notes.len(),
-            is_vertical_layout
+            is_vertical_layout,
         );
-        let mut notes = Self { notes_pipeline, is_vertical_layout };
+        let mut notes = Self {
+            notes_pipeline,
+            is_vertical_layout,
+        };
         notes.resize(target, lanes);
         notes
     }
@@ -31,11 +33,53 @@ impl Notes {
         let midi = &target.midi_file.as_ref().unwrap();
         let mut instances = Vec::new();
 
-        for note in midi.merged_track.notes.iter() {
-            if note.channel != 9 {
-                continue;
-            }
+        if !self.is_vertical_layout {
+            let lane = lanes.first().unwrap();
+            let metronome_grid = [0.05, 0.05, 0.05];
+            let metronome_events = midi
+                .merged_track
+                .events
+                .iter()
+                .filter(|n| n.channel == 9 && n.track_id == 99);
 
+            for (i, event) in metronome_events.clone().enumerate() {
+                let ref_event = if i == 0 {
+                    metronome_events.clone().next()
+                } else {
+                    metronome_events.clone().nth(i - 1)
+                };
+
+                if ref_event.is_none() {
+                    log::error!("failed to find metronome events");
+                    continue;
+                }
+
+                let ref_event = ref_event.unwrap();
+
+                let grid_size = if i == 0 {
+                    (ref_event.timestamp - event.timestamp).as_secs_f32()
+                } else {
+                    (event.timestamp - ref_event.timestamp).as_secs_f32()
+                };
+
+                let x = event.timestamp.as_secs_f32() - grid_size * 2.0;
+                let h = lanes.len() as f32 * lane.size.h;
+
+                instances.push(NoteInstance {
+                    position: [x, lane.pos.y],
+                    size: [1.0, h],
+                    color: metronome_grid,
+                    radius: 0.0,
+                });
+            }
+        }
+
+        for note in midi
+            .merged_track
+            .notes
+            .iter()
+            .filter(|n| n.channel == 9 && n.track_id != 99)
+        {
             match lanes.iter().find(|i| i.mapping.accept_note(note.note)) {
                 None => {
                     println!("missing mapping for note {}", note.note);
@@ -56,7 +100,7 @@ impl Notes {
 
                         x = lane.pos.x + (lane.size.w / 2.0) - (note_w / 2.0);
                         y = note.start.as_secs_f32();
-                    }           
+                    }
 
                     instances.push(NoteInstance {
                         position: [x, y],

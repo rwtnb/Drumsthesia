@@ -15,9 +15,9 @@ pub fn add_metronome(
     let mut events = Vec::new();
     let mut pulses = 0u64;
 
-    let track_start = merged_track.notes.first().unwrap().start;
-    let track_end = merged_track.notes.last().unwrap().end;
-    let mut timestamp = track_start + Duration::from_secs(3);
+    let track_start = merged_track.events.first().unwrap().timestamp;
+    let track_end = merged_track.events.last().unwrap().timestamp;
+    let mut timestamp = track_start;
 
     for i in 0..i32::MAX {
         if i % beats_per_measure == 0 {
@@ -31,6 +31,16 @@ pub fn add_metronome(
                 },
                 track_id,
             });
+            events.push(MidiEvent {
+                channel: 9,
+                delta: 0,
+                timestamp,
+                message: MidiMessage::NoteOff {
+                    key: 76.into(),
+                    vel: 0.into(),
+                },
+                track_id,
+            });
         } else {
             events.push(MidiEvent {
                 channel: 9,
@@ -39,6 +49,16 @@ pub fn add_metronome(
                 message: MidiMessage::NoteOn {
                     key: 77.into(),
                     vel: 80.into(),
+                },
+                track_id,
+            });
+            events.push(MidiEvent {
+                channel: 9,
+                delta: 0,
+                timestamp,
+                message: MidiMessage::NoteOff {
+                    key: 76.into(),
+                    vel: 0.into(),
                 },
                 track_id,
             });
