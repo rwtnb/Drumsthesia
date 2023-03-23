@@ -7,6 +7,7 @@ Drumsthesia is the perfect tool for begginer drummers who want to take their ski
 **Download:** [Get the latest release on our Releases Page](https://github.com/rwtnb/Drumsthesia/releases)
 
 Drumsthesia is available for MacOS, Linux (untested), and Windows (untested). 
+**PS:** If you're downloading the Linux or Windows binaries, you'll have to also download the [SoundFont](https://github.com/rwtnb/Drumsthesia/raw/main/Arachno%20SoundFont%20-%20Version%201.0.sf2) file for the synthesizer.
 
 ## Features
 
