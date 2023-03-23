@@ -25,9 +25,20 @@ pub struct MidiPlayer {
 impl MidiPlayer {
     pub fn new(target: &mut Target) -> Self {
         let midi_file = target.midi_file.as_ref().unwrap();
+        let mut merged_track = midi_file.merged_track.clone();
+
+        merged_track.events.iter_mut().filter(|e| e.track_id == 99).for_each(|evt| {
+            match evt.message {
+                MidiMessage::NoteOn { key, vel } => {
+                    let vel = vel.as_int() as f32 * target.config.metronome_volume;
+                    evt.message = MidiMessage::NoteOn { key, vel: midly::num::u7::new(vel as u8) }
+                }
+                _ => {}
+            }
+        });
 
         let mut player = Self {
-            playback: lib_midi::PlaybackState::new(Duration::from_secs(3), &midi_file.merged_track),
+            playback: lib_midi::PlaybackState::new(Duration::from_secs(3), &merged_track),
             rewind_controller: RewindController::None,
             output_manager: target.output_manager.clone(),
             midi_file: midi_file.clone(),
@@ -100,7 +111,7 @@ impl MidiPlayer {
                             .press_key(KeyPressSource::File, key.as_int(), true);
                     }
 
-                    if !self.guide_notes && is_drum_channel {
+                    if !self.guide_notes && is_drum_channel && event.track_id != 99 {
                         return;
                     }
 
@@ -114,7 +125,7 @@ impl MidiPlayer {
                             .press_key(KeyPressSource::File, key.as_int(), false);
                     }
 
-                    if !self.guide_notes && is_drum_channel {
+                    if !self.guide_notes && is_drum_channel && event.track_id != 99 {
                         return;
                     }
 

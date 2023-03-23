@@ -62,6 +62,9 @@ pub struct Config {
     #[serde(default = "default_music_volume")]
     pub music_volume: u8,
 
+    #[serde(default = "default_metronome_volume")]
+    pub metronome_volume: f32,
+
     #[serde(default = "default_layout")]
     pub layout: PlayingSceneLayout,
 
@@ -112,6 +115,7 @@ impl Config {
             mute_drums: default_mute_drums(),
             drums_volume: default_drums_volume(),
             music_volume: default_music_volume(),
+            metronome_volume: default_metronome_volume(),
             layout: default_layout(),
             color_schema: default_color_schema(),
             background_color: Default::default(),
@@ -171,6 +175,10 @@ fn default_music_volume() -> u8 {
 
 fn default_drums_volume() -> u8 {
     100
+}
+
+fn default_metronome_volume() -> f32 {
+    1.0
 }
 
 fn default_layout() -> PlayingSceneLayout {

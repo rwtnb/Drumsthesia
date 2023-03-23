@@ -38,7 +38,6 @@ pub struct MidiNote {
 
 #[derive(Debug, Clone)]
 pub struct MidiTrack {
-    // Translated notes with calculated timings
     pub notes: Vec<MidiNote>,
 
     pub events: Vec<MidiEvent>,

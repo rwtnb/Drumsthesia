@@ -1,4 +1,4 @@
-use crate::{utils, MidiTrack};
+use crate::{utils, MidiTrack, metronome::add_metronome};
 use midly::{Format, Smf, Timing};
 use std::{fs, path::Path};
 
@@ -51,6 +51,8 @@ impl Midi {
                 merged_track.events.push(e);
             }
         }
+
+        let mut merged_track = add_metronome(merged_track, &tempo_track, u_per_quarter_note);
 
         merged_track.notes.sort_by_key(|n| n.start);
         merged_track.events.sort_by_key(|n| n.timestamp);
