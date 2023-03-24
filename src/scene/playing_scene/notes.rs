@@ -40,7 +40,7 @@ impl Notes {
                 .merged_track
                 .events
                 .iter()
-                .filter(|n| n.channel == 9 && n.track_id == 99);
+                .filter(|n| n.channel == 15);
 
             for (i, event) in metronome_events.clone().enumerate() {
                 let ref_event = if i == 0 {
@@ -78,7 +78,7 @@ impl Notes {
             .merged_track
             .notes
             .iter()
-            .filter(|n| n.channel == 9 && n.track_id != 99)
+            .filter(|n| n.channel == 9)
         {
             match lanes.iter().find(|i| i.mapping.accept_note(note.note)) {
                 None => {

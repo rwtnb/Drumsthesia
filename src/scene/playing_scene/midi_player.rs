@@ -20,25 +20,15 @@ pub struct MidiPlayer {
     guide_notes: bool,
     drums_volume: u8,
     music_volume: u8,
+    metronome_volume: u8,
 }
 
 impl MidiPlayer {
     pub fn new(target: &mut Target) -> Self {
         let midi_file = target.midi_file.as_ref().unwrap();
-        let mut merged_track = midi_file.merged_track.clone();
-
-        merged_track.events.iter_mut().filter(|e| e.track_id == 99).for_each(|evt| {
-            match evt.message {
-                MidiMessage::NoteOn { key, vel } => {
-                    let vel = vel.as_int() as f32 * target.config.metronome_volume;
-                    evt.message = MidiMessage::NoteOn { key, vel: midly::num::u7::new(vel as u8) }
-                }
-                _ => {}
-            }
-        });
 
         let mut player = Self {
-            playback: lib_midi::PlaybackState::new(Duration::from_secs(3), &merged_track),
+            playback: lib_midi::PlaybackState::new(Duration::from_secs(4), &midi_file.merged_track),
             rewind_controller: RewindController::None,
             output_manager: target.output_manager.clone(),
             midi_file: midi_file.clone(),
@@ -46,6 +36,7 @@ impl MidiPlayer {
             guide_notes: target.config.guide_notes,
             drums_volume: target.config.drums_volume,
             music_volume: target.config.music_volume,
+            metronome_volume: target.config.metronome_volume,
         };
 
         player.update(target, Duration::ZERO);
@@ -67,6 +58,8 @@ impl MidiPlayer {
             for channel in 0..16 {
                 let value = if channel == 9 {
                     self.drums_volume
+                } else if channel == 15 {
+                    self.metronome_volume
                 } else {
                     self.music_volume
                 };
