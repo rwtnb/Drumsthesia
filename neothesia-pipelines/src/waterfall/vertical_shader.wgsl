@@ -39,7 +39,7 @@ let speed: f32 = 400.0;
 
 @vertex
 fn vs_main(vertex: Vertex, note: NoteInstance) -> VertexOutput {
-    let speed = speed * (view_uniform.size.x / 720.0);
+    let speed = speed * (view_uniform.size.x / 1080.0);
     let size = vec2<f32>(note.size.x, note.size.y);
 
     let y = view_uniform.size.y - view_uniform.size.y / 5.0 - size.y / 2.0;

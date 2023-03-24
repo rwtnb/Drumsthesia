@@ -102,7 +102,7 @@ impl AppUi {
 
                 drums_volume: target.config.drums_volume,
                 music_volume: target.config.music_volume,
-                metronome_volume: (100.0 * target.config.metronome_volume) as u8,
+                metronome_volume: target.config.metronome_volume,
 
                 layouts: vec![PlayingSceneLayout::Horizontal, PlayingSceneLayout::Vertical],
                 selected_layout: target.config.layout,
@@ -197,7 +197,7 @@ impl Program for AppUi {
                 self.data.music_volume = v;
             }
             Message::MetronomeVolumeSlider(v) => {
-                target.config.metronome_volume = v as f32 / 100.0;
+                target.config.metronome_volume = v;
                 self.data.metronome_volume = v;
             }
             Message::SelectLayout(v) => {
@@ -467,7 +467,7 @@ impl<'a> Step {
             .height(Length::Units(30));
 
         let metronome_volume =
-            slider(0..=100, data.metronome_volume, Message::MetronomeVolumeSlider)
+            slider(0..=127, data.metronome_volume, Message::MetronomeVolumeSlider)
             .width(Length::Fill)
             .style(theme::slider());
 

@@ -63,7 +63,7 @@ pub struct Config {
     pub music_volume: u8,
 
     #[serde(default = "default_metronome_volume")]
-    pub metronome_volume: f32,
+    pub metronome_volume: u8,
 
     #[serde(default = "default_layout")]
     pub layout: PlayingSceneLayout,
@@ -177,8 +177,8 @@ fn default_drums_volume() -> u8 {
     100
 }
 
-fn default_metronome_volume() -> f32 {
-    1.0
+fn default_metronome_volume() -> u8 {
+    127
 }
 
 fn default_layout() -> PlayingSceneLayout {

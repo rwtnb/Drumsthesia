@@ -7,6 +7,7 @@ Drumsthesia is the perfect tool for begginer drummers who want to take their ski
 **Download:** [Get the latest release on our Releases Page](https://github.com/rwtnb/Drumsthesia/releases)
 
 Drumsthesia is available for MacOS, Linux (untested), and Windows (untested). 
+**PS:** If you're downloading the Linux or Windows binaries, you'll have to also download the [SoundFont](https://github.com/rwtnb/Drumsthesia/raw/main/Arachno%20SoundFont%20-%20Version%201.0.sf2) file for the synthesizer.
 
 ## Features
 
@@ -16,7 +17,7 @@ A metronome is the perfect tool to help you keep in time. You'll always be on th
 **Wait For Notes:**
 Drumsthesia automatically pauses the song until you've hit the expected notes. This allows you to learn at your own pace and master each section before moving on.
 
-**Sound Output:**
+**Synthesizer:**
 Drumsthesia includes a powerful [built-in SoundFont2 synthesizer](https://github.com/PolyMeilex/OxiSynth), providing high-quality sound for your drum practice. You can also output MIDI events to your DAW(Reaper, GarageBand, Ableton...) or other MIDI devices for an even more realistic experience.
 
 **Volume Control:**
