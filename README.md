@@ -75,5 +75,3 @@ If you encounter any issues, feel free to create an issue.
 ## Acknowledgements
 
 Drumsthesia was born from the rockin' inspiration (and source code) of [Neothesia](https://github.com/PolyMeilex/Neothesia), a synthesia-like software for piano players. We've also got to give a shoutout to the [Arachno SoundFont](https://www.arachnosoft.com/main/soundfont.php) project for providing the default soundfont used in Drumsthesia. Keep on rockin', friends!
-
-Also ChatGPT, for writing this awesome README file and the metronome feature for Drumsthesia.
