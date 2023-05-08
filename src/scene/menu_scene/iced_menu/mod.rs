@@ -8,7 +8,7 @@ use iced_native::{
     column as col,
     image::Handle as ImageHandle,
     row,
-    widget::{self, button, checkbox, container, image, pick_list, slider, text, vertical_space},
+    widget::{self, button, checkbox, container, image, pick_list, slider, text, vertical_space, scrollable},
     Command, Length, Padding,
 };
 
@@ -542,10 +542,8 @@ fn top_padded<'a, MSG: 'a>(
     content: impl Into<Element<'a, MSG>>,
 ) -> widget::Column<'a, MSG, iced_wgpu::Renderer> {
     let spacer = vertical_space(Length::FillPortion(1));
-    let content = container(content)
-        .height(Length::FillPortion(4))
-        .center_x()
-        .max_width(650);
+    let content = scrollable(content)
+        .height(Length::FillPortion(7));
 
     col![spacer, content]
         .width(Length::Fill)
